@@ -20,3 +20,9 @@ Or:
 mvn package
 java -cp target/classes:daikon-5.8.16.jar in.natelev.daikondiffvictimpolluter.DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv
 ```
+
+To just run the test with the polluter (no logs will be generated):
+
+```bash
+./daikon-victim-polluter.sh test <com.example.VictimTest> <com.example.PolluterTest>
+```
