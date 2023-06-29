@@ -26,3 +26,5 @@ To just run the test with the polluter (no logs will be generated):
 ```bash
 ./daikon-victim-polluter.sh test <com.example.VictimTest> <com.example.PolluterTest>
 ```
+
+If the Java process runs out of memory during processing, you should try again with `-XX:MaxRAMPercentage=50.0` or a higher number.

@@ -6,6 +6,8 @@ import java.util.List;
 import static in.natelev.daikondiffvictimpolluter.Colors.*;
 
 public class DaikonDiffVictimPolluter {
+    private static boolean debug;
+
     public static void main(String[] args) {
         if (args.length < 3) {
             System.err.println(
@@ -13,10 +15,15 @@ public class DaikonDiffVictimPolluter {
             System.exit(1);
         }
 
+        debug = args.length > 3 && args[3].equals("--debug");
+
+        printLoadMsg("Loading PptMaps...");
         ReducedPptMap polluterVictim = getPptMap(new File(args[0]));
+        printLoadMsg("\rLoaded polluter+victim. Now loading victim...");
         ReducedPptMap victim = getPptMap(new File(args[1]));
+        printLoadMsg("\rLoaded victim. Now loading polluter...       ");
         ReducedPptMap polluter = getPptMap(new File(args[2]));
-        boolean debug = args.length > 3 && args[3].equals("--debug");
+        printLoadMsg("\rLoaded all PptMaps!                          \n\n");
 
         if (debug) {
             String debugPrelude = "\n\n\n" + RED + "!!! DEBUG: " + RESET;
@@ -29,6 +36,12 @@ public class DaikonDiffVictimPolluter {
                 victim);
 
         diff(pvMinusP, victim);
+    }
+
+    private static void printLoadMsg(String msg) {
+        if (debug || System.console() != null) {
+            System.out.print(msg);
+        }
     }
 
     private static ReducedPptMap getPptMap(File file) {
@@ -59,7 +72,6 @@ public class DaikonDiffVictimPolluter {
 
     private static void diff(ReducedPptMap pvMinusP, ReducedPptMap victim) {
         for (ReducedPpt ppt : pvMinusP.pptIterable()) {
-            StringBuilder diffBuilder = new StringBuilder();
             ReducedPpt victimPpt = victim.map.get(ppt.name);
 
             // * heuristics
@@ -67,33 +79,43 @@ public class DaikonDiffVictimPolluter {
                 continue;
             }
 
-            List<String> invariants = ppt.getInvariants();
-            List<String> victimInvariants = victimPpt.getInvariants();
+            List<ReducedInvariant> invariants = ppt.getInvariants();
+            List<ReducedInvariant> victimInvariants = victimPpt.getInvariants();
 
+            // remove duplicates
             invariants.removeIf((invariant) -> victimInvariants.contains(invariant));
             victimInvariants.removeIf((invariant) -> invariants.contains(invariant));
 
-            for (String invariant : invariants) {
-                diffBuilder.append(
-                        RED + "p+v> " + RESET + invariant + " " + RED + "(polluter+victim only)" +
-                                RESET + "\n");
-            }
+            // remove all invariants without a similar invariant in the other run
+            invariants.removeIf(
+                    (invariant) -> !victimInvariants.stream()
+                            .anyMatch((other) -> invariant.hasSameFirstVariableAs(other)));
+            victimInvariants.removeIf(
+                    (invariant) -> !invariants.stream().anyMatch((other) -> invariant.hasSameFirstVariableAs(other)));
 
-            for (String invariant : victimInvariants) {
-                diffBuilder
-                        .append(GREEN + " v> " + RESET + invariant + " " + GREEN + "(victim only)" +
-                                RESET + "\n");
-            }
+            if (invariants.size() == 0 || victimInvariants.size() == 0)
+                continue;
 
-            String builtDiff = diffBuilder.toString();
-            if (builtDiff.length() > 0) {
+            System.out.println(
+                    BLUE +
+                            "==========================================================================="
+                            + RESET);
+            System.out.println(YELLOW + ppt.name + RESET);
+
+            for (ReducedInvariant invariant : invariants) {
                 System.out.println(
-                        BLUE +
-                                "==========================================================================="
-                                + RESET);
-                System.out.println(YELLOW + ppt.name + RESET);
-                System.out.println(builtDiff);
+                        RED + "p+v> " + RESET + invariant + " " + RED
+                                + "(polluter+victim only)" +
+                                RESET);
             }
+
+            for (ReducedInvariant invariant : victimInvariants) {
+                System.out.println(GREEN + "  v> " + RESET + invariant + " " + GREEN
+                        + "(victim only)" +
+                        RESET);
+            }
+
+            System.out.println();
         }
     }
 }

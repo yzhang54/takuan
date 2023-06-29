@@ -8,14 +8,14 @@ import static in.natelev.daikondiffvictimpolluter.Colors.*;
 
 public class ReducedPpt {
     public String name;
-    private List<String> invariants;
+    private List<ReducedInvariant> invariants;
 
-    ReducedPpt(PptTopLevel pptTopLevel, List<String> invariants) {
+    ReducedPpt(PptTopLevel pptTopLevel, List<ReducedInvariant> invariants) {
         this.name = pptTopLevel.name;
         this.invariants = invariants;
     }
 
-    public List<String> getInvariants() {
+    public List<ReducedInvariant> getInvariants() {
         return invariants;
     }
 
@@ -25,7 +25,7 @@ public class ReducedPpt {
         builder.append(
                 BLUE + "===========================================================================" + RESET + "\n");
         builder.append(YELLOW + name + RESET + "\n");
-        for (String invariant : invariants) {
+        for (ReducedInvariant invariant : invariants) {
             builder.append("* " + invariant + "\n");
         }
         return builder.toString();
