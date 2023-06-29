@@ -7,15 +7,15 @@ run_daikon() {
 
     if [ "$SHOULD" = "pass" ]; then
         # TODO: we should retry if it fails, but only if it fails for an actual reason, not because of the `extends` bug in DynComp
-        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy.|javax.servlet.' org.junit.runner.JUnitCore $@
+        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' org.junit.runner.JUnitCore $@
 
-        while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy.|javax.servlet.' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
+        while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
         do echo "Re-trying daikon.Chicory because the test(s) failed..."; sleep 1; done;
     else 
-        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy.|javax.servlet.' org.junit.runner.JUnitCore $@
+        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' org.junit.runner.JUnitCore $@
         do echo "Re-trying daikon.DynComp because the test(s) passed..."; sleep 1; done;
 
-        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy.|javax.servlet.' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
+        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
         do echo "Re-trying daikon.Chicory because the test(s) passed..."; sleep 1; done;
     fi
 
