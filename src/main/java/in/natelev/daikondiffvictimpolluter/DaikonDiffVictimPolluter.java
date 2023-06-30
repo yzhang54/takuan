@@ -3,6 +3,8 @@ package in.natelev.daikondiffvictimpolluter;
 import daikon.*;
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import static in.natelev.daikondiffvictimpolluter.Colors.*;
 
 public class DaikonDiffVictimPolluter {
@@ -79,12 +81,13 @@ public class DaikonDiffVictimPolluter {
                 continue;
             }
 
-            List<ReducedInvariant> invariants = ppt.getInvariants();
+            List<ReducedInvariant> originalInvariants = ppt.getInvariants();
             List<ReducedInvariant> victimInvariants = victimPpt.getInvariants();
 
             // remove duplicates
-            invariants.removeIf((invariant) -> victimInvariants.contains(invariant));
-            victimInvariants.removeIf((invariant) -> invariants.contains(invariant));
+            List<ReducedInvariant> invariants = originalInvariants.stream()
+                    .filter((invariant) -> !victimInvariants.contains(invariant)).collect(Collectors.toList());
+            victimInvariants.removeIf((invariant) -> originalInvariants.contains(invariant));
 
             // remove all invariants without a similar invariant in the other run
             invariants.removeIf(
