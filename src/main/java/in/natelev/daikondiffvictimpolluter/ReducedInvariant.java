@@ -28,6 +28,10 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         return true;
     }
 
+    public String varNames() {
+        return "(" + String.join(", ", variables) + ")";
+    }
+
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {
         return pptTopLevel.getInvariants().stream()
                 .filter((invariant) -> {
@@ -46,10 +50,6 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                 .collect(Collectors.toList());
     }
 
-    public String varNames() {
-        return "(" + String.join(", ", variables) + ")";
-    }
-
     @Override
     public String toString() {
         return value;
@@ -66,5 +66,10 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
             return this.toString().equals(other.toString());
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 }
