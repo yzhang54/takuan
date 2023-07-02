@@ -21,6 +21,8 @@ mvn package
 java -cp target/classes:daikon-5.8.16.jar in.natelev.daikondiffvictimpolluter.DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv
 ```
 
+Provide a `-o output.dinv` argument to write the results to a file.
+
 To just run the test with the polluter (no logs will be generated):
 
 ```bash

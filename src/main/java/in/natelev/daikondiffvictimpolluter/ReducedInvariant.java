@@ -8,10 +8,12 @@ import daikon.PptTopLevel;
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
     private String value;
     private String[] variables;
+    private String type;
 
-    ReducedInvariant(String value, String[] variables) {
+    ReducedInvariant(String value, String[] variables, String type) {
         this.value = value;
         this.variables = variables;
+        this.type = type;
     }
 
     public boolean hasSameFirstVariableAs(ReducedInvariant other) {
@@ -32,6 +34,10 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         return "(" + String.join(", ", variables) + ")";
     }
 
+    public String getType() {
+        return type;
+    }
+
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {
         return pptTopLevel.getInvariants().stream()
                 .filter((invariant) -> {
@@ -44,7 +50,7 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     }
                     return new ReducedInvariant(
                             invariant.toString(),
-                            variables);
+                            variables, invariant.getClass().getName());
                 })
                 .sorted()
                 .collect(Collectors.toList());

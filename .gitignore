@@ -4,3 +4,4 @@ target
 *.dtrace*
 *.decls-DynComp
 daikon-*.log
+*.dinv

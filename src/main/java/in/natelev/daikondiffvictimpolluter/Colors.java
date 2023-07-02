@@ -7,6 +7,7 @@ public class Colors {
     public static String GREEN = "";
     public static String BLUE = "";
     public static String CYAN = "";
+    public static String MAGENTA = "";
 
     // to allow for redirection to a file
     static {
@@ -17,6 +18,7 @@ public class Colors {
             GREEN = "\u001B[32m";
             BLUE = "\u001B[34m";
             CYAN = "\u001B[36m";
+            MAGENTA = "\u001B[35m";
         }
     }
 }

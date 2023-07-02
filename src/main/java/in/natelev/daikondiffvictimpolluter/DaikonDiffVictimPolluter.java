@@ -2,48 +2,79 @@ package in.natelev.daikondiffvictimpolluter;
 
 import daikon.*;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static in.natelev.daikondiffvictimpolluter.Colors.*;
+import static in.natelev.daikondiffvictimpolluter.Output.*;
 
 public class DaikonDiffVictimPolluter {
-    private static boolean debug;
-
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println(
-                    "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (--debug)");
-            System.exit(1);
+            printUsage();
         }
 
-        debug = args.length > 3 && args[3].equals("--debug");
+        if (args.length > 3) {
+            boolean lookingForOutput = false;
+            for (String arg : Arrays.asList(args).subList(3, args.length)) {
+                if (lookingForOutput) {
+                    lookingForOutput = false;
+                    try {
+                        Output.setOutputFile(arg);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                } else if (arg.equals("-o")) {
+                    lookingForOutput = true;
+                } else if (arg.equals("-h")) {
+                    printUsage();
+                } else if (arg.equals("--debug")) {
+                    debug = true;
+                    log(GREEN + "Debug enabled." + RESET);
+                } else if (arg.equals("--output-colors-to-file")) {
+                    log(GREEN + "Will send colors to file if possible" + RESET);
+                    Output.setOutputColorsToFile(true);
+                } else {
+                    System.err.println(RED + "Unknown option " + arg + RESET);
+                    System.exit(1);
+                }
+            }
+        }
 
-        printLoadMsg("Loading PptMaps...");
+        log(MAGENTA + "Loading PptMaps..." + RESET);
         ReducedPptMap polluterVictim = getPptMap(new File(args[0]));
-        printLoadMsg("\rLoaded polluter+victim. Now loading victim...");
+        log(BLUE + "Loaded polluter+victim. Now loading victim..." + RESET);
         ReducedPptMap victim = getPptMap(new File(args[1]));
-        printLoadMsg("\rLoaded victim. Now loading polluter...       ");
+        log(CYAN + "Loaded victim. Now loading polluter..." + RESET);
         ReducedPptMap polluter = getPptMap(new File(args[2]));
-        printLoadMsg("\rLoaded all PptMaps!                          \n\n");
+        log(GREEN + "\rLoaded all PptMaps!\n" + RESET);
 
         if (debug) {
             String debugPrelude = "\n\n\n" + RED + "!!! DEBUG: " + RESET;
-            System.out.println(debugPrelude + "Polluter+Victim\n" + polluterVictim);
-            System.out.println(debugPrelude + "Polluter\n" + polluter);
-            System.out.println(debugPrelude + "Victim\n" + victim);
+            log(debugPrelude + "Polluter+Victim\n" + polluterVictim);
+            log(debugPrelude + "Polluter\n" + polluter);
+            log(debugPrelude + "Victim\n" + victim);
         }
 
         ReducedPptMap pvMinusP = allPptsinPVButNotOnlyInP(polluterVictim, polluter,
                 victim);
 
         diff(pvMinusP, victim);
+
+        Output.shutdown();
     }
 
-    private static void printLoadMsg(String msg) {
-        if (debug || System.console() != null) {
-            System.out.print(msg);
-        }
+    private static void printUsage() {
+        System.err.println(
+                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file)"
+                        + RESET);
+        System.exit(1);
     }
 
     private static ReducedPptMap getPptMap(File file) {
@@ -73,14 +104,21 @@ public class DaikonDiffVictimPolluter {
     }
 
     private static void diff(ReducedPptMap pvMinusP, ReducedPptMap victim) {
+        StringBuilder diffBuilder = new StringBuilder();
+
+        ArrayList<String> rankedOutputInvariantLogs = new ArrayList<>();
+        int MAX_RANKED_OUTPUT_INVARIANTS = 6;
+
         for (ReducedPpt ppt : pvMinusP.pptIterable()) {
             ReducedPpt victimPpt = victim.map.get(ppt.name);
 
-            // * heuristics
             if (victimPpt == null) {
                 continue;
             }
 
+            boolean continueRankingInvariants = rankedOutputInvariantLogs.size() < MAX_RANKED_OUTPUT_INVARIANTS;
+            MultiValueMap<String, String> invariantsByVariable = continueRankingInvariants ? new MultiValueMap<>()
+                    : null;
             List<ReducedInvariant> originalInvariants = ppt.getInvariants();
             List<ReducedInvariant> victimInvariants = victimPpt.getInvariants();
 
@@ -99,26 +137,62 @@ public class DaikonDiffVictimPolluter {
             if (invariants.size() == 0 || victimInvariants.size() == 0)
                 continue;
 
-            System.out.println(
+            diffBuilder.append(
                     BLUE +
                             "==========================================================================="
-                            + RESET);
-            System.out.println(YELLOW + ppt.name + RESET);
+                            + RESET + "\n");
+            diffBuilder.append(YELLOW + ppt.name + RESET + "\n");
 
             for (ReducedInvariant invariant : invariants) {
-                System.out.println(
+                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual"))
+                    invariantsByVariable.put(invariant.varNames(), RED + "    pv> " + RESET + invariant.toString());
+                diffBuilder.append(
                         RED + "p+v> " + RESET + invariant + " " + RED
                                 + "(polluter+victim only)" +
-                                RESET);
+                                RESET + "\n");
             }
 
             for (ReducedInvariant invariant : victimInvariants) {
-                System.out.println(GREEN + "  v> " + RESET + invariant + " " + GREEN
+                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual"))
+                    invariantsByVariable.put(invariant.varNames(), GREEN + "    .v> " + RESET + invariant.toString());
+                diffBuilder.append(GREEN + "  v> " + RESET + invariant + " " + GREEN
                         + "(victim only)" +
-                        RESET);
+                        RESET + "\n");
             }
 
-            System.out.println();
+            if (continueRankingInvariants) {
+                rankedOutputInvariantLogs.addAll(invariantsByVariable.values().stream()
+                        .sorted((x, y) -> x.size() - y.size())
+                        .map((list) -> YELLOW + ppt.name + RESET + "\n" + String.join("\n", list))
+                        .limit(MAX_RANKED_OUTPUT_INVARIANTS - rankedOutputInvariantLogs.size())
+                        .collect(Collectors.toList()));
+            }
+
+            diffBuilder.append("\n");
+        }
+
+        output(String.join("\n\n", rankedOutputInvariantLogs));
+
+        outputIfFile("\n\n");
+        outputIfFile(diffBuilder.toString());
+    }
+
+    private static class MultiValueMap<K, V> {
+        private HashMap<K, List<V>> map = new HashMap<>();
+
+        public Collection<List<V>> values() {
+            return map.values();
+        }
+
+        public void put(K key, V value) {
+            map.compute(key, (_k, list) -> {
+                if (list == null) {
+                    return new ArrayList<>(Arrays.asList(value));
+                } else {
+                    list.add(value);
+                    return list;
+                }
+            });
         }
     }
 }
