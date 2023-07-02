@@ -1,12 +1,12 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import daikon.*;
+import in.natelev.daikondiffvictimpolluter.RankedInvs.RankedInvByVarMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -106,7 +106,7 @@ public class DaikonDiffVictimPolluter {
     private static void diff(ReducedPptMap pvMinusP, ReducedPptMap victim) {
         StringBuilder diffBuilder = new StringBuilder();
 
-        ArrayList<String> rankedOutputInvariantLogs = new ArrayList<>();
+        ArrayList<RankedInvs> rankedOutputInvariants = new ArrayList<>();
         int MAX_RANKED_OUTPUT_INVARIANTS = 6;
 
         for (ReducedPpt ppt : pvMinusP.pptIterable()) {
@@ -116,8 +116,8 @@ public class DaikonDiffVictimPolluter {
                 continue;
             }
 
-            boolean continueRankingInvariants = rankedOutputInvariantLogs.size() < MAX_RANKED_OUTPUT_INVARIANTS;
-            MultiValueMap<String, String> invariantsByVariable = continueRankingInvariants ? new MultiValueMap<>()
+            boolean continueRankingInvariants = rankedOutputInvariants.size() < MAX_RANKED_OUTPUT_INVARIANTS;
+            RankedInvByVarMap invariantsByVariable = continueRankingInvariants ? new RankedInvByVarMap()
                     : null;
             List<ReducedInvariant> originalInvariants = ppt.getInvariants();
             List<ReducedInvariant> victimInvariants = victimPpt.getInvariants();
@@ -146,7 +146,7 @@ public class DaikonDiffVictimPolluter {
             for (ReducedInvariant invariant : invariants) {
                 if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
                         && invariant.firstVar() != null)
-                    invariantsByVariable.put(invariant.firstVar(), RED + "    pv> " + RESET + invariant.toString());
+                    invariantsByVariable.put(invariant.firstVar(), invariant, true, ppt.name);
                 diffBuilder.append(
                         RED + "p+v> " + RESET + invariant + " " + RED
                                 + "(polluter+victim only)" +
@@ -156,51 +156,28 @@ public class DaikonDiffVictimPolluter {
             for (ReducedInvariant invariant : victimInvariants) {
                 if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
                         && invariant.firstVar() != null)
-                    invariantsByVariable.put(invariant.firstVar(), GREEN + "    .v> " + RESET + invariant.toString());
+                    invariantsByVariable.put(invariant.firstVar(), invariant, false, ppt.name);
                 diffBuilder.append(GREEN + "  v> " + RESET + invariant + " " + GREEN
                         + "(victim only)" +
                         RESET + "\n");
             }
 
             if (continueRankingInvariants) {
-                rankedOutputInvariantLogs.addAll(invariantsByVariable.values().stream()
-                        .sorted((x, y) -> x.size() - y.size())
-                        .filter((list) -> list.size() > 1)
-                        .map((list) -> YELLOW + ppt.name + RESET + "\n" + String.join("\n", list))
-                        .limit(MAX_RANKED_OUTPUT_INVARIANTS - rankedOutputInvariantLogs.size())
+                rankedOutputInvariants.addAll(invariantsByVariable.values().stream()
+                        .filter((rankedInvs) -> rankedInvs.hasBoth())
+                        .sorted((a, b) -> a.totalSize() - b.totalSize())
+                        .limit(MAX_RANKED_OUTPUT_INVARIANTS - rankedOutputInvariants.size())
                         .collect(Collectors.toList()));
             }
 
             diffBuilder.append("\n");
         }
 
-        output(String.join("\n\n", rankedOutputInvariantLogs));
+        output(String.join("\n", rankedOutputInvariants.stream()
+                .map(rankedInvs -> rankedInvs.toString())
+                .collect(Collectors.toList())));
 
-        outputIfFile("\n\n");
+        outputIfFile("\n");
         outputIfFile(diffBuilder.toString());
-    }
-
-    private static class MultiValueMap<K, V> {
-        private HashMap<K, List<V>> map = new HashMap<>();
-
-        public Collection<List<V>> values() {
-            return map.values();
-        }
-
-        public void put(K key, V value) {
-            map.compute(key, (_k, list) -> {
-                if (list == null) {
-                    return new ArrayList<>(Arrays.asList(value));
-                } else {
-                    list.add(value);
-                    return list;
-                }
-            });
-        }
-
-        @Override
-        public String toString() {
-            return map.toString();
-        }
     }
 }
