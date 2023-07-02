@@ -1,7 +1,7 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import daikon.*;
-import in.natelev.daikondiffvictimpolluter.RankedInvs.RankedInvByVarMap;
+import in.natelev.daikondiffvictimpolluter.DiffedInvs.DiffedInvsByVarMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import static in.natelev.daikondiffvictimpolluter.Colors.*;
 import static in.natelev.daikondiffvictimpolluter.Output.*;
 
 public class DaikonDiffVictimPolluter {
+    private static int MAX_RANKED_OUTPUT_INVARIANTS = 3;
+
     public static void main(String[] args) {
         if (args.length < 3) {
             printUsage();
@@ -65,7 +67,23 @@ public class DaikonDiffVictimPolluter {
         ReducedPptMap pvMinusP = allPptsinPVButNotOnlyInP(polluterVictim, polluter,
                 victim);
 
-        diff(pvMinusP, victim);
+        log(BLUE + "Diffing..." + RESET);
+        ArrayList<DiffedInvs> rankedDiffedInvs = diffAndRank(pvMinusP, victim);
+        log(GREEN + "Finished diffing. Now attempting to find root cause methods..." + RESET);
+
+        ArrayList<String> possibleRootCauseMethods = new ArrayList<>();
+        for (DiffedInvs diffedInvs : rankedDiffedInvs) {
+            possibleRootCauseMethods
+                    .addAll(diffedInvs.findMethodsOfPossibleRootCause(polluterVictim, polluter, victim));
+        }
+        if (possibleRootCauseMethods.size() > 0) {
+            log(GREEN + "Possible root cause methods found:\n" + RESET + String.join("\n",
+                    possibleRootCauseMethods.stream().map((s) -> BLUE + "* " + RESET + s)
+                            .collect(Collectors.toList()))
+                    + "\n");
+        } else {
+            log(RED + "No possible root cause methods found.\n" + RESET);
+        }
 
         Output.shutdown();
     }
@@ -103,11 +121,10 @@ public class DaikonDiffVictimPolluter {
         return pvMinusP;
     }
 
-    private static void diff(ReducedPptMap pvMinusP, ReducedPptMap victim) {
+    private static ArrayList<DiffedInvs> diffAndRank(ReducedPptMap pvMinusP, ReducedPptMap victim) {
         StringBuilder diffBuilder = new StringBuilder();
 
-        ArrayList<RankedInvs> rankedOutputInvariants = new ArrayList<>();
-        int MAX_RANKED_OUTPUT_INVARIANTS = 6;
+        ArrayList<DiffedInvs> rankedOutputInvariants = new ArrayList<>();
 
         for (ReducedPpt ppt : pvMinusP.pptIterable()) {
             ReducedPpt victimPpt = victim.map.get(ppt.name);
@@ -117,7 +134,7 @@ public class DaikonDiffVictimPolluter {
             }
 
             boolean continueRankingInvariants = rankedOutputInvariants.size() < MAX_RANKED_OUTPUT_INVARIANTS;
-            RankedInvByVarMap invariantsByVariable = continueRankingInvariants ? new RankedInvByVarMap()
+            DiffedInvsByVarMap invariantsByVariable = continueRankingInvariants ? new DiffedInvsByVarMap()
                     : null;
             List<ReducedInvariant> originalInvariants = ppt.getInvariants();
             List<ReducedInvariant> victimInvariants = victimPpt.getInvariants();
@@ -141,7 +158,7 @@ public class DaikonDiffVictimPolluter {
                     BLUE +
                             "==========================================================================="
                             + RESET + "\n");
-            diffBuilder.append(YELLOW + ppt.name + RESET + "\n");
+            diffBuilder.append(ppt.prettyName() + "\n");
 
             for (ReducedInvariant invariant : invariants) {
                 if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
@@ -164,7 +181,7 @@ public class DaikonDiffVictimPolluter {
 
             if (continueRankingInvariants) {
                 rankedOutputInvariants.addAll(invariantsByVariable.values().stream()
-                        .filter((rankedInvs) -> rankedInvs.hasBoth())
+                        .filter((diffedInvs) -> diffedInvs.hasBoth())
                         .sorted((a, b) -> a.totalSize() - b.totalSize())
                         .limit(MAX_RANKED_OUTPUT_INVARIANTS - rankedOutputInvariants.size())
                         .collect(Collectors.toList()));
@@ -174,10 +191,12 @@ public class DaikonDiffVictimPolluter {
         }
 
         output(String.join("\n", rankedOutputInvariants.stream()
-                .map(rankedInvs -> rankedInvs.toString())
+                .map(diffedInvs -> diffedInvs.toString())
                 .collect(Collectors.toList())));
 
         outputIfFile("\n");
         outputIfFile(diffBuilder.toString());
+
+        return rankedOutputInvariants;
     }
 }

@@ -19,6 +19,8 @@ public class ReducedPptMap {
         map = new LinkedHashMap<>(pptMap.size());
 
         for (PptTopLevel pptTopLevel : pptMap.pptIterable()) {
+            // FIXME: :::ENTER should not be thrown out here, we should ignore it when
+            // diffing but use it in root cause analysis
             if (pptTopLevel.num_samples() == 0 || pptTopLevel.is_enter())
                 continue;
 
