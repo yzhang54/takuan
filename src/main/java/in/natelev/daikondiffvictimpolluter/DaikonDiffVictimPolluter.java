@@ -144,8 +144,9 @@ public class DaikonDiffVictimPolluter {
             diffBuilder.append(YELLOW + ppt.name + RESET + "\n");
 
             for (ReducedInvariant invariant : invariants) {
-                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual"))
-                    invariantsByVariable.put(invariant.varNames(), RED + "    pv> " + RESET + invariant.toString());
+                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
+                        && invariant.firstVar() != null)
+                    invariantsByVariable.put(invariant.firstVar(), RED + "    pv> " + RESET + invariant.toString());
                 diffBuilder.append(
                         RED + "p+v> " + RESET + invariant + " " + RED
                                 + "(polluter+victim only)" +
@@ -153,8 +154,9 @@ public class DaikonDiffVictimPolluter {
             }
 
             for (ReducedInvariant invariant : victimInvariants) {
-                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual"))
-                    invariantsByVariable.put(invariant.varNames(), GREEN + "    .v> " + RESET + invariant.toString());
+                if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
+                        && invariant.firstVar() != null)
+                    invariantsByVariable.put(invariant.firstVar(), GREEN + "    .v> " + RESET + invariant.toString());
                 diffBuilder.append(GREEN + "  v> " + RESET + invariant + " " + GREEN
                         + "(victim only)" +
                         RESET + "\n");
@@ -163,6 +165,7 @@ public class DaikonDiffVictimPolluter {
             if (continueRankingInvariants) {
                 rankedOutputInvariantLogs.addAll(invariantsByVariable.values().stream()
                         .sorted((x, y) -> x.size() - y.size())
+                        .filter((list) -> list.size() > 1)
                         .map((list) -> YELLOW + ppt.name + RESET + "\n" + String.join("\n", list))
                         .limit(MAX_RANKED_OUTPUT_INVARIANTS - rankedOutputInvariantLogs.size())
                         .collect(Collectors.toList()));
@@ -193,6 +196,11 @@ public class DaikonDiffVictimPolluter {
                     return list;
                 }
             });
+        }
+
+        @Override
+        public String toString() {
+            return map.toString();
         }
     }
 }

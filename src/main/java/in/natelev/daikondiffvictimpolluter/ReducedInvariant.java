@@ -34,6 +34,14 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         return "(" + String.join(", ", variables) + ")";
     }
 
+    public String firstVar() {
+        if (variables.length > 0) {
+            return variables[0];
+        } else {
+            return null;
+        }
+    }
+
     public String getType() {
         return type;
     }
