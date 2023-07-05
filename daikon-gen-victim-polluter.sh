@@ -7,15 +7,15 @@ run_daikon() {
 
     if [ "$SHOULD" = "pass" ]; then
         # TODO: we should retry if it fails, but only if it fails for an actual reason, not because of the `extends` bug in DynComp
-        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' org.junit.runner.JUnitCore $@
+        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:./runner-1.0-SNAPSHOT.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner' in.natelev.runner.Runner $@
 
-        while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
+        while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:./runner-1.0-SNAPSHOT.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner' --comparability-file=JUnitCore.decls-DynComp in.natelev.runner.Runner $@
         do echo "Re-trying daikon.Chicory because the test(s) failed..."; sleep 1; done;
     else 
-        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' org.junit.runner.JUnitCore $@
+        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:./runner-1.0-SNAPSHOT.jar" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner' in.natelev.runner.Runner $@
         do echo "Re-trying daikon.DynComp because the test(s) passed..."; sleep 1; done;
 
-        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest' --comparability-file=JUnitCore.decls-DynComp org.junit.runner.JUnitCore $@
+        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:./runner-1.0-SNAPSHOT.jar" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner' --comparability-file=JUnitCore.decls-DynComp in.natelev.runner.Runner $@
         do echo "Re-trying daikon.Chicory because the test(s) passed..."; sleep 1; done;
     fi
 
@@ -37,7 +37,7 @@ elif [ "$1" = "test" ]; then
     VICTIM=$1
     POLLUTER=$2
     
-    java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar" org.junit.runner.JUnitCore $POLLUTER $VICTIM
+    java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner $POLLUTER $VICTIM
 else
     VICTIM=$1
     POLLUTER=$2
@@ -45,8 +45,8 @@ else
     # if you are in a multi-module project, you may have to go to the project root and run `mvn install`
     mvn dependency:copy-dependencies
     mvn package -Dmaven.test.skip=true
-
-    # TODO: support Class#method syntax and auto-comment out all the other tests of the classes
+    mvn compile
+    mvn test-compile
 
     run_daikon "pv" "fail" "$POLLUTER" "$VICTIM"
     run_daikon "polluter" "pass" "$POLLUTER"
