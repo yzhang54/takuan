@@ -40,10 +40,14 @@ public class DiffedInvs {
 
             for (ReducedInvariant inv : ppt.getInvariants()) {
                 for (ReducedInvariant polluterInv : pvInvs) {
+                    // ignore params, as matching params are unlikely to be the actual root cause
+                    if (polluterInv.firstVar().startsWith("p("))
+                        continue;
+
                     if (inv.toString().equals(polluterInv.toString())) {
                         methods.add(ppt.prettyName() + "\n  " + BLUE + "\u001B[2m\u2B91  " + RESET + "\u001B[2m"
                                 + inv.toString()
-                                + "\uu001B[22m");
+                                + "\u001B[22m" + RESET);
                     }
                 }
             }

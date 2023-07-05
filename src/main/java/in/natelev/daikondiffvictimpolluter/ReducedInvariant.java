@@ -54,7 +54,8 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                 .map((invariant) -> {
                     String[] variables = new String[invariant.ppt.var_infos.length];
                     for (int i = 0; i < invariant.ppt.var_infos.length; i++) {
-                        variables[i] = invariant.ppt.var_infos[i].name();
+                        boolean isParam = invariant.ppt.var_infos[i].isDerivedParam();
+                        variables[i] = String.format(isParam ? "p(%s)" : "%s", invariant.ppt.var_infos[i].name());
                     }
                     return new ReducedInvariant(
                             invariant.toString(),
