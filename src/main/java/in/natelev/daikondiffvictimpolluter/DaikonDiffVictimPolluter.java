@@ -72,10 +72,15 @@ public class DaikonDiffVictimPolluter {
         log(GREEN + "Finished diffing. Now attempting to find root cause methods..." + RESET);
 
         ArrayList<String> possibleRootCauseMethods = new ArrayList<>();
-        for (DiffedInvs diffedInvs : rankedDiffedInvs) {
-            possibleRootCauseMethods
-                    .addAll(diffedInvs.findMethodsOfPossibleRootCause(polluterVictim, polluter, victim));
+        if (rankedDiffedInvs.size() == 0) {
+            output(RED + "ERR: No invariants differed using current heuristics.");
+        } else {
+            for (DiffedInvs diffedInvs : rankedDiffedInvs) {
+                possibleRootCauseMethods
+                        .addAll(diffedInvs.findMethodsOfPossibleRootCause(polluterVictim, polluter, victim));
+            }
         }
+
         if (possibleRootCauseMethods.size() > 0) {
             log(GREEN + "Possible root cause methods found:\n" + RESET + String.join("\n",
                     possibleRootCauseMethods.stream().map((s) -> BLUE + "* " + RESET + s)

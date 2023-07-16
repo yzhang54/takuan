@@ -9,7 +9,7 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>daikon-diff-victim-polluter</name>
-  <url>https://github.com/UltimatePro-Grammer/daikon-diff-victim-polluter</url>
+  <url>https://github.com/NateLevin1/daikon-diff-victim-polluter</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -4,6 +4,14 @@ Automatically diff victim+polluter invariants with victim invariants. For use wi
 
 ## Usage
 
+### To automatically run all:
+
+```bash
+./ddvp.sh <gitURL> <sha> <victim> <polluter> (<module>)
+```
+
+### To run scripts individually:
+
 To get the `.inv` files, go to any Java 8 Maven project and run:
 
 ```bash
