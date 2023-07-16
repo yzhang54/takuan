@@ -62,7 +62,6 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                         // "name.getClass().getName()" -> "name", "name.toString()" -> "name"
                         // we do this because it allows the diffing step to understand that
                         // name.toString() == "..." and name == null both refer to the same variable
-                        System.out.println(invariant.ppt.var_infos[i].var_flags.contains(VarFlags.SYNTHETIC));
                         if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.CLASSNAME)) {
                             name = name.substring(0, name.length() - ".getClass().getName()".length());
                         } else if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.TO_STRING)) {
