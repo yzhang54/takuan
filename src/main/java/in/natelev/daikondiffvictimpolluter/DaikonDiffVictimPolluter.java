@@ -57,15 +57,16 @@ public class DaikonDiffVictimPolluter {
         ReducedPptMap polluter = getPptMap(new File(args[2]));
         log(GREEN + "\rLoaded all PptMaps!\n" + RESET);
 
+        ReducedPptMap pvMinusP = allPptsinPVButNotOnlyInP(polluterVictim, polluter,
+                victim);
+
         if (debug) {
             String debugPrelude = "\n\n\n" + RED + "!!! DEBUG: " + RESET;
             log(debugPrelude + "Polluter+Victim\n" + polluterVictim);
             log(debugPrelude + "Polluter\n" + polluter);
             log(debugPrelude + "Victim\n" + victim);
+            log(debugPrelude + "PV-P\n" + pvMinusP);
         }
-
-        ReducedPptMap pvMinusP = allPptsinPVButNotOnlyInP(polluterVictim, polluter,
-                victim);
 
         log(BLUE + "Diffing..." + RESET);
         ArrayList<DiffedInvs> rankedDiffedInvs = diffAndRank(pvMinusP, victim);

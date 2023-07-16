@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import daikon.PptTopLevel;
+import daikon.VarInfo.VarFlags;
 
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
     private String value;
@@ -55,7 +56,20 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     String[] variables = new String[invariant.ppt.var_infos.length];
                     for (int i = 0; i < invariant.ppt.var_infos.length; i++) {
                         boolean isParam = invariant.ppt.var_infos[i].isDerivedParam();
-                        variables[i] = String.format(isParam ? "p(%s)" : "%s", invariant.ppt.var_infos[i].name());
+                        String name = invariant.ppt.var_infos[i].name();
+
+                        // "clean" the variables by removing the synthetic part:
+                        // "name.getClass().getName()" -> "name", "name.toString()" -> "name"
+                        // we do this because it allows the diffing step to understand that
+                        // name.toString() == "..." and name == null both refer to the same variable
+                        System.out.println(invariant.ppt.var_infos[i].var_flags.contains(VarFlags.SYNTHETIC));
+                        if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.CLASSNAME)) {
+                            name = name.substring(0, name.length() - ".getClass().getName()".length());
+                        } else if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.TO_STRING)) {
+                            name = name.substring(0, name.length() - ".toString()".length());
+                        }
+
+                        variables[i] = String.format(isParam ? "p(%s)" : "%s", name);
                     }
                     return new ReducedInvariant(
                             invariant.toString(),
