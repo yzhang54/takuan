@@ -58,14 +58,24 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                         boolean isParam = invariant.ppt.var_infos[i].isDerivedParam();
                         String name = invariant.ppt.var_infos[i].name();
 
+                        if (name.startsWith("orig")) {
+                            variables[i] = name;
+                            continue;
+                        }
+
                         // "clean" the variables by removing the synthetic part:
                         // "name.getClass().getName()" -> "name", "name.toString()" -> "name"
                         // we do this because it allows the diffing step to understand that
-                        // name.toString() == "..." and name == null both refer to the same variable
+                        // name.toString == "..." and name == null both refer to the same variable
                         if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.CLASSNAME)) {
                             name = name.substring(0, name.length() - ".getClass().getName()".length());
                         } else if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.TO_STRING)) {
-                            name = name.substring(0, name.length() - ".toString()".length());
+                            if (name.endsWith("()")) {
+                                name = name.substring(0, name.length() - ".getType()".length());
+                            } else {
+                                // the () are omitted purposefully
+                                name = name.substring(0, name.length() - ".toString".length());
+                            }
                         }
 
                         variables[i] = String.format(isParam ? "p(%s)" : "%s", name);
