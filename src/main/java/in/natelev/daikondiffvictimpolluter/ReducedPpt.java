@@ -12,8 +12,8 @@ public class ReducedPpt {
     private List<ReducedInvariant> invariants;
     private PptType type;
 
-    ReducedPpt(PptTopLevel pptTopLevel, List<ReducedInvariant> invariants) {
-        this.name = pptTopLevel.name;
+    ReducedPpt(String name, PptTopLevel pptTopLevel, List<ReducedInvariant> invariants) {
+        this.name = name;
         this.type = pptTopLevel.type;
         this.invariants = invariants;
     }

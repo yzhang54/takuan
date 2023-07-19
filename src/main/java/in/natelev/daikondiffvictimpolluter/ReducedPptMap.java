@@ -34,21 +34,22 @@ public class ReducedPptMap {
                 // ? are we losing some information by doing this?
                 // NOTE: :::CLASS always comes before :::OBJECT. If the ordering gets changed,
                 // this code will break
-                map.put(pptTopLevel.name.substring(0, pptTopLevel.name.length() - 5) + "OBJECT",
-                        new ReducedPpt(pptTopLevel, invariants));
+                String name = pptTopLevel.name.substring(0, pptTopLevel.name.length() - 5) + "OBJECT";
+                map.put(name,
+                        new ReducedPpt(name, pptTopLevel, invariants));
             } else if (pptTopLevel.is_object()) {
                 map.compute(pptTopLevel.name,
-                        (_k, val) -> {
+                        (name, val) -> {
                             if (val == null) {
-                                return new ReducedPpt(pptTopLevel, invariants);
+                                return new ReducedPpt(name, pptTopLevel, invariants);
                             } else {
-                                return new ReducedPpt(pptTopLevel,
+                                return new ReducedPpt(name, pptTopLevel,
                                         Stream.concat(val.getInvariants().stream(), invariants.stream()).distinct()
                                                 .collect(Collectors.toList()));
                             }
                         });
             } else {
-                map.put(pptTopLevel.name, new ReducedPpt(pptTopLevel, invariants));
+                map.put(pptTopLevel.name, new ReducedPpt(pptTopLevel.name, pptTopLevel, invariants));
             }
         }
     }
