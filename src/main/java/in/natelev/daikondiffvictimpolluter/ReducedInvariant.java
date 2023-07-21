@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import daikon.PptTopLevel;
+import daikon.VarInfo;
 import daikon.VarInfo.VarFlags;
 
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
@@ -55,10 +56,11 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                 .map((invariant) -> {
                     String[] variables = new String[invariant.ppt.var_infos.length];
                     for (int i = 0; i < invariant.ppt.var_infos.length; i++) {
-                        boolean isParam = invariant.ppt.var_infos[i].isDerivedParam();
-                        String name = invariant.ppt.var_infos[i].name();
+                        VarInfo varInfo = invariant.ppt.var_infos[i];
+                        boolean isParam = varInfo.isDerivedParam();
+                        String name = varInfo.name();
 
-                        if (name.startsWith("orig")) {
+                        if (varInfo.isPrestate()) {
                             variables[i] = name;
                             continue;
                         }
@@ -67,9 +69,9 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                         // "name.getClass().getName()" -> "name", "name.toString()" -> "name"
                         // we do this because it allows the diffing step to understand that
                         // name.toString == "..." and name == null both refer to the same variable
-                        if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.CLASSNAME)) {
+                        if (varInfo.var_flags.contains(VarFlags.CLASSNAME)) {
                             name = name.substring(0, name.length() - ".getClass().getName()".length());
-                        } else if (invariant.ppt.var_infos[i].var_flags.contains(VarFlags.TO_STRING)) {
+                        } else if (varInfo.var_flags.contains(VarFlags.TO_STRING)) {
                             if (name.endsWith("()")) {
                                 name = name.substring(0, name.length() - ".getType()".length());
                             } else {
