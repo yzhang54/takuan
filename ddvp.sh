@@ -29,14 +29,16 @@ else
     [[ -z "${NO_INSTALL}" ]] && mvn install -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
 fi
 
-printf "\n\n\n\n\033[0;31mTest Run (Should Fail):\033[0m\n"
-if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$scriptDir/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner "$polluter" "$victim"; then
-    printf "\n\n\033[0;31mERR: Test PV run did not fail!\033[0m Are the polluter and victim switched?\n"
-    exit 1;
+if [[ -z "${NO_GEN}" ]]; then
+    printf "\n\n\n\n\033[0;31mTest Run (Should Fail):\033[0m\n"
+    if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$scriptDir/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner "$polluter" "$victim"; then
+        printf "\n\n\033[0;31mERR: Test PV run did not fail!\033[0m Are the polluter and victim switched?\n"
+        exit 1;
+    fi
+    printf "\n\n\n\n"
+    
+    INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
 fi
-printf "\n\n\n\n"
-
-INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
 
 "$scriptDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv"
 
