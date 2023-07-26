@@ -30,6 +30,10 @@ else
 fi
 
 if [[ -z "${NO_TEST}" ]]; then
+    mvn dependency:copy-dependencies
+    mvn package -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
+    mvn compile
+    mvn test-compile
     printf "\n\n\n\n\033[0;31mTest Run (Should Fail):\033[0m\n"
     if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$scriptDir/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner "$polluter" "$victim"; then
         printf "\n\n\033[0;31mERR: Test PV run did not fail!\033[0m Are the polluter and victim switched?\n"

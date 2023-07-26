@@ -1,21 +1,27 @@
 package in.natelev.daikondiffvictimpolluter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import daikon.PptTopLevel;
 import daikon.VarInfo;
 import daikon.VarInfo.VarFlags;
+import daikon.inv.Equality;
+import daikon.inv.unary.string.OneOfString;
+import daikon.inv.unary.string.SingleString;
 
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
     private String value;
     private String[] variables;
+    private String[] eqValues = null;
     private String type;
 
-    ReducedInvariant(String value, String[] variables, String type) {
+    ReducedInvariant(String value, String[] variables, String type, String[] eqValues) {
         this.value = value;
         this.variables = variables;
         this.type = type;
+        this.eqValues = eqValues;
     }
 
     public boolean hasSameFirstVariableAs(ReducedInvariant other) {
@@ -48,6 +54,39 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         return type;
     }
 
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public String getUniquelyHadIfNeeded(List<ReducedInvariant> otherList) {
+        if (!getType().contains("OneOf"))
+            return toString();
+
+        boolean uniquesFound = false;
+        StringBuilder uniquelyHad = new StringBuilder(variables[0] + " uniquely had { ");
+        loopOverEqValues: for (String eqValue : eqValues) {
+            if (eqValue == null)
+                continue;
+
+            for (ReducedInvariant otherInv : otherList) {
+                if (hasSameFirstVariableAs(otherInv) && otherInv.eqValues != null) {
+                    for (String otherEqValue : otherInv.eqValues) {
+                        if (otherEqValue != null && eqValue.equals(otherEqValue)) {
+                            if (!uniquesFound)
+                                uniquesFound = true;
+
+                            continue loopOverEqValues;
+                        }
+                    }
+                }
+
+                uniquelyHad.append("\"" + eqValue + "\"").append(", ");
+            }
+        }
+
+        return uniquesFound ? uniquelyHad + "} (" + value + ")" : value;
+    }
+
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {
         return pptTopLevel.getInvariants().stream()
                 .filter((invariant) -> {
@@ -72,19 +111,26 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                         if (varInfo.var_flags.contains(VarFlags.CLASSNAME)) {
                             name = name.substring(0, name.length() - ".getClass().getName()".length());
                         } else if (varInfo.var_flags.contains(VarFlags.TO_STRING)) {
-                            if (name.endsWith("()")) {
+                            if (name.endsWith(".getType()")) {
                                 name = name.substring(0, name.length() - ".getType()".length());
-                            } else {
+                            } else if (name.endsWith(".toString")) {
                                 // the () are omitted purposefully
                                 name = name.substring(0, name.length() - ".toString".length());
+                            } else if (name.endsWith(".mapInfo")) {
+                                // the () are omitted purposefully
+                                name = name.substring(0, name.length() - ".mapInfo".length());
                             }
                         }
 
                         variables[i] = String.format(isParam ? "p(%s)" : "%s", name);
                     }
+                    String[] eqValues = null;
+                    if (invariant instanceof OneOfString) {
+                        eqValues = ((OneOfString) invariant).getElts();
+                    }
                     return new ReducedInvariant(
                             invariant.toString(),
-                            variables, invariant.getClass().getName());
+                            variables, invariant.getClass().getName(), eqValues);
                 })
                 .sorted()
                 .collect(Collectors.toList());

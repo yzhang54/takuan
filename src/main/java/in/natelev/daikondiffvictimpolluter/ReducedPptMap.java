@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import daikon.PptConditional;
 import daikon.PptMap;
 import daikon.PptTopLevel;
 

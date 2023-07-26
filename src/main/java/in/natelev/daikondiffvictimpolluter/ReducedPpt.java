@@ -36,7 +36,9 @@ public class ReducedPpt {
         int lastCheckedIndex = modifiedName.indexOf("(");
         for (int i = 1; i < vars.length - 1; i++) {
             lastCheckedIndex = modifiedName.indexOf(",", lastCheckedIndex);
-            modifiedName.insert(lastCheckedIndex, " " + vars[i]);
+            if (lastCheckedIndex != -1) {
+                modifiedName.insert(lastCheckedIndex, " " + vars[i]);
+            }
         }
 
         modifiedName.insert(modifiedName.indexOf(")", lastCheckedIndex), " " +

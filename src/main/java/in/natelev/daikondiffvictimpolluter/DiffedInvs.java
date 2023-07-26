@@ -61,10 +61,10 @@ public class DiffedInvs {
         StringBuilder builder = new StringBuilder();
         builder.append(YELLOW + pptName + RESET + "\n");
         for (ReducedInvariant inv : pvInvs) {
-            builder.append(RED + "    pv> " + RESET + inv.toString() + "\n");
+            builder.append(RED + "    pv> " + RESET + inv.getUniquelyHadIfNeeded(victimInvs) + "\n");
         }
         for (ReducedInvariant inv : victimInvs) {
-            builder.append(GREEN + "    .v> " + RESET + inv.toString() + "\n");
+            builder.append(GREEN + "    .v> " + RESET + inv.getUniquelyHadIfNeeded(pvInvs) + "\n");
         }
         return builder.toString();
     }
