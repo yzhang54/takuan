@@ -18,10 +18,8 @@ To get the `.inv` files, go to any Java 8 Maven project and run:
 ./daikon-gen-victim-polluter.sh <com.example.Test.victimMethod> <com.example.Test.polluterMethod>
 ```
 
-> **Note**
->
+> [!NOTE]
 > If you are having problems during the DynComp stage, try setting `NO_DYNCOMP=1`.
-> If you are having problems during the Chicory stage, try ignoring individual classes by name using `IGNORED_CLASSES='some|regex'`
 
 Then analyze the generated logs with:
 
