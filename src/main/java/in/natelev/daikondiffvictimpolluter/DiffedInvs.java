@@ -1,7 +1,9 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,29 +29,71 @@ public class DiffedInvs {
         return pvInvs.size() + victimInvs.size();
     }
 
-    public List<String> findMethodsOfPossibleRootCause(ReducedPptMap polluterVictim, ReducedPptMap polluter,
+    public List<String[]> findMethodsOfPossibleRootCause(ReducedPptMap polluterVictim, ReducedPptMap polluter,
             ReducedPptMap victim) {
-        ArrayList<String> methods = new ArrayList<>();
+        ArrayList<String[]> methods = new ArrayList<>();
 
         // * technique 1: search for a pvInv that is in the polluter
         for (ReducedPpt ppt : polluter.pptIterable()) {
-            // FIXME: we should allow :::ENTER as well, but that is currently stripped in
-            // the reducing phase
             if (ppt.getType() != PptType.EXIT)
                 continue;
+            ReducedPpt polluterEnterPpt = polluter.map.get(ppt.name.replace(":::EXIT", ":::ENTER"));
+            if (polluterEnterPpt == null)
+                continue;
 
-            for (ReducedInvariant inv : ppt.getInvariants()) {
-                for (ReducedInvariant polluterInv : pvInvs) {
+            nextPolluterInv: for (ReducedInvariant polluterInv : pvInvs) {
+                for (ReducedInvariant inv : ppt.getInvariants()) {
                     // ignore params, as matching params are unlikely to be the actual root cause
                     if (polluterInv.firstVar().startsWith("p("))
                         continue;
 
-                    if (inv.toString().equals(polluterInv.toString())) {
-                        methods.add(ppt.prettyName() + "\n  " + BLUE + "\u001B[2m\u2B91  " + RESET + "\u001B[2m"
-                                + inv.toString()
-                                + "\u001B[22m" + RESET);
+                    // check for e.g.:
+                    // pv> var one of { "a", "b" }
+                    // .v> var == "a"
+                    // naive check for identical invariant will not work in this case, so we need to
+                    // diff the invariants' eqValues
+                    if (polluterInv.hasSameFirstVariableAs(inv) && inv.getEqValues() != null) {
+                        List<String> polluterInvDiffed = polluterInv.diffEqValues(victimInvs);
+                        if (polluterInvDiffed != null) {
+                            for (String val : inv.getEqValues()) {
+                                if (val == null)
+                                    continue;
+                                for (String polluterVal : polluterInvDiffed) {
+                                    if (val.equals(polluterVal)) {
+                                        // check if a victim invariant is seen in the :::ENTER
+                                        for (ReducedInvariant polluterEnterInv : polluterEnterPpt.getInvariants()) {
+                                            if (polluterEnterInv.getEqValues() == null)
+                                                continue;
+                                            for (ReducedInvariant victimInv : victimInvs) {
+                                                List<String> diffedWithVictimEqValues = polluterEnterInv
+                                                        .diffEqValues(Collections.singletonList(victimInv));
+                                                if (diffedWithVictimEqValues != null && diffedWithVictimEqValues
+                                                        .size() != polluterEnterInv.getEqValues().length) {
+                                                    // if the sizes aren't equal, then one of the values was removed!
+                                                    methods.add(new String[] { ppt.prettyName(), inv.toString() });
+                                                    continue nextPolluterInv;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // naive check for identical invariants: polluter in EXIT, victim in ENTER
+                        if (inv.toString().equals(polluterInv.toString())) {
+                            for (ReducedInvariant polluterEnterInv : polluterEnterPpt.getInvariants()) {
+                                for (ReducedInvariant victimInv : victimInvs) {
+                                    if (polluterEnterInv.toString().equals(victimInv.toString())) {
+                                        methods.add(new String[] { ppt.prettyName(), inv.toString() });
+                                        continue nextPolluterInv;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+
             }
         }
 

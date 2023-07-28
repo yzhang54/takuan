@@ -1,12 +1,10 @@
 package in.natelev.daikondiffvictimpolluter;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import daikon.PptConditional;
 import daikon.PptMap;
 import daikon.PptTopLevel;
 
@@ -21,9 +19,7 @@ public class ReducedPptMap {
         map = new LinkedHashMap<>(pptMap.size());
 
         for (PptTopLevel pptTopLevel : pptMap.pptIterable()) {
-            // FIXME: :::ENTER should not be thrown out here, we should ignore it when
-            // diffing but use it in root cause analysis
-            if (pptTopLevel.num_samples() == 0 || pptTopLevel.is_enter())
+            if (pptTopLevel.num_samples() == 0)
                 continue;
 
             List<ReducedInvariant> invariants = ReducedInvariant.getFromPptTopLevel(pptTopLevel);

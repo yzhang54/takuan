@@ -1,15 +1,13 @@
 package in.natelev.daikondiffvictimpolluter;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import daikon.PptTopLevel;
 import daikon.VarInfo;
 import daikon.VarInfo.VarFlags;
-import daikon.inv.Equality;
 import daikon.inv.unary.string.OneOfString;
-import daikon.inv.unary.string.SingleString;
 
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
     private String value;
@@ -58,12 +56,27 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         this.value = value;
     }
 
+    public String[] getEqValues() {
+        return eqValues;
+    }
+
     public String getUniquelyHadIfNeeded(List<ReducedInvariant> otherList) {
-        if (!getType().contains("OneOf"))
+        List<String> uniquelyHad = diffEqValues(otherList);
+
+        if (uniquelyHad == null)
             return toString();
 
+        return firstVar() + " uniquely had { " + uniquelyHad.stream().map((val) -> {
+            return "\"" + val + "\"";
+        }).collect(Collectors.joining(", ")) + " } (" + value + ")";
+    }
+
+    public List<String> diffEqValues(List<ReducedInvariant> otherList) {
+        if (eqValues == null || !getType().contains("OneOf"))
+            return null;
+
         boolean uniquesFound = false;
-        StringBuilder uniquelyHad = new StringBuilder(variables[0] + " uniquely had { ");
+        List<String> uniquelyHad = new ArrayList<>();
         loopOverEqValues: for (String eqValue : eqValues) {
             if (eqValue == null)
                 continue;
@@ -71,6 +84,8 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
             for (ReducedInvariant otherInv : otherList) {
                 if (hasSameFirstVariableAs(otherInv) && otherInv.eqValues != null) {
                     for (String otherEqValue : otherInv.eqValues) {
+                        if (otherInv == null)
+                            continue;
                         if (otherEqValue != null && eqValue.equals(otherEqValue)) {
                             if (!uniquesFound)
                                 uniquesFound = true;
@@ -80,11 +95,11 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     }
                 }
 
-                uniquelyHad.append("\"" + eqValue + "\"").append(", ");
+                uniquelyHad.add(eqValue);
             }
         }
 
-        return uniquesFound ? uniquelyHad + "} (" + value + ")" : value;
+        return uniquesFound ? uniquelyHad : null;
     }
 
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {

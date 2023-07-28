@@ -1,6 +1,7 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import daikon.*;
+import daikon.PptTopLevel.PptType;
 import in.natelev.daikondiffvictimpolluter.DiffedInvs.DiffedInvsByVarMap;
 
 import java.io.File;
@@ -78,7 +79,11 @@ public class DaikonDiffVictimPolluter {
         } else {
             for (DiffedInvs diffedInvs : rankedDiffedInvs) {
                 possibleRootCauseMethods
-                        .addAll(diffedInvs.findMethodsOfPossibleRootCause(polluterVictim, polluter, victim));
+                        .addAll(diffedInvs.findMethodsOfPossibleRootCause(polluterVictim, polluter, victim).stream()
+                                .map((tup) -> tup[0] + "\n  " + BLUE + "\u001B[2m\u2B91  " + RESET + "\u001B[2m"
+                                        + tup[1].toString()
+                                        + "\u001B[22m" + RESET)
+                                .collect(Collectors.toList()));
             }
         }
 
@@ -133,6 +138,9 @@ public class DaikonDiffVictimPolluter {
         ArrayList<DiffedInvs> rankedOutputInvariants = new ArrayList<>();
 
         for (ReducedPpt ppt : pvMinusP.pptIterable()) {
+            if (ppt.getType().equals(PptType.ENTER))
+                continue;
+
             ReducedPpt victimPpt = victim.map.get(ppt.name);
 
             if (victimPpt == null) {
@@ -169,7 +177,7 @@ public class DaikonDiffVictimPolluter {
             for (ReducedInvariant invariant : invariants) {
                 if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
                         && invariant.firstVar() != null)
-                    invariantsByVariable.put(invariant.firstVar(), invariant, true, ppt.name);
+                    invariantsByVariable.put(invariant.firstVar(), invariant, true, ppt.prettyName());
                 diffBuilder.append(
                         RED + "p+v> " + RESET + invariant + " " + RED
                                 + "(polluter+victim only)" +
@@ -179,7 +187,7 @@ public class DaikonDiffVictimPolluter {
             for (ReducedInvariant invariant : victimInvariants) {
                 if (invariantsByVariable != null && !invariant.getType().contains("NonEqual")
                         && invariant.firstVar() != null)
-                    invariantsByVariable.put(invariant.firstVar(), invariant, false, ppt.name);
+                    invariantsByVariable.put(invariant.firstVar(), invariant, false, ppt.prettyName());
                 diffBuilder.append(GREEN + "  v> " + RESET + invariant + " " + GREEN
                         + "(victim only)" +
                         RESET + "\n");

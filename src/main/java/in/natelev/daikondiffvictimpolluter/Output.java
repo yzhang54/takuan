@@ -19,7 +19,7 @@ public class Output {
 
     public static void shutdown() {
         if (outputWriter != null) {
-            log(GREEN + "\u2713 Succesfully wrote to " + file + "." + RESET);
+            log(GREEN + "\u2713 Successfully wrote to " + file + RESET);
             outputWriter.close();
         }
     }
