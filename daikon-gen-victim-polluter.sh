@@ -80,6 +80,7 @@ else
     run_daikon "pv" "fail" "$POLLUTER" "$VICTIM"
     run_daikon "polluter" "pass" "$POLLUTER"
     run_daikon "victim" "pass" "$VICTIM"
+    run_daikon "all" "pass" "all"
 fi;
 
 

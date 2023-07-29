@@ -1,6 +1,9 @@
 package in.natelev.runner;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import org.junit.DynCompHackJUnitCommandLineParseResult;
 import org.junit.runner.Description;
@@ -27,6 +30,7 @@ public class Runner {
     }
 
     public static void main(String[] args) {
+        // ? remove this when not needed?
         DynCompHackJUnitCommandLineParseResult.parse(() -> {
             JUnitCore junit = new JUnitCore();
             int exitCode = 0;
@@ -36,6 +40,12 @@ public class Runner {
                     System.err.println(RED + "No tests specified" + RESET);
                     System.exit(1);
                 } else if (args.length == 1) {
+                    if (args[0].equals("all")) {
+                        System.out.println(YELLOW + "Running all tests" + RESET);
+                        junit.run(getAllTestClasses());
+                        return;
+                    }
+
                     TestArg test = new TestArg(args[0]);
                     System.out.println(YELLOW + "Running " + test + RESET);
                     Result result = junit.run(Request.method(test.getTestClass(), test.getMethod()));
@@ -103,6 +113,42 @@ public class Runner {
                 failure.getException().printStackTrace();
             }
             return 1;
+        }
+    }
+
+    private static Class<?>[] getAllTestClasses() {
+        List<Class<?>> testClasses = new ArrayList<>();
+
+        try {
+            // Discover all test classes dynamically by looking through
+            // ./target/test-classes/
+            String basePath = "./target/test-classes/";
+            findTestClasses(new File(basePath), "", testClasses);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return testClasses.toArray(new Class<?>[0]);
+    }
+
+    private static void findTestClasses(File directory, String packageName, List<Class<?>> testClasses) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                String fileName = file.getName();
+                if (file.isDirectory()) {
+                    String newPackageName = packageName.length() == 0 ? fileName : packageName + "." + fileName;
+                    findTestClasses(file, newPackageName, testClasses);
+                } else if (fileName.endsWith(".class") && !fileName.contains("$")) {
+                    try {
+                        String className = packageName + "." + fileName.substring(0, fileName.length() - 6);
+                        Class<?> clazz = Class.forName(className);
+                        testClasses.add(clazz);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 }
