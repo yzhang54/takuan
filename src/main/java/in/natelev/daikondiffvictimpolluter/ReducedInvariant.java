@@ -1,12 +1,14 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import daikon.PptTopLevel;
 import daikon.VarInfo;
 import daikon.VarInfo.VarFlags;
+import daikon.inv.unary.scalar.OneOfScalar;
 import daikon.inv.unary.string.OneOfString;
 
 public class ReducedInvariant implements Comparable<ReducedInvariant> {
@@ -105,7 +107,10 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {
         return pptTopLevel.getInvariants().stream()
                 .filter((invariant) -> {
-                    return invariant.isWorthPrinting() && !invariant.hasUninterestingConstant();
+                    // we might want to consider adding `&& !invariant.hasUninterestingConstant()`,
+                    // if it gives us better results. it was removed to work better on the
+                    // toy-flaky-tests repo
+                    return invariant.isWorthPrinting();
                 })
                 .map((invariant) -> {
                     String[] variables = new String[invariant.ppt.var_infos.length];
@@ -142,6 +147,9 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     String[] eqValues = null;
                     if (invariant instanceof OneOfString) {
                         eqValues = ((OneOfString) invariant).getElts();
+                    } else if (invariant instanceof OneOfScalar) {
+                        eqValues = Arrays.stream(((OneOfScalar) invariant).getElts()).mapToObj(String::valueOf)
+                                .toArray(String[]::new);
                     }
                     return new ReducedInvariant(
                             invariant.toString(),
