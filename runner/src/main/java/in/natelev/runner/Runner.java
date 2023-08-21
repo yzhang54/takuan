@@ -40,17 +40,46 @@ public class Runner {
                     System.err.println(RED + "No tests specified" + RESET);
                     System.exit(1);
                 } else if (args.length == 1) {
-                    if (args[0].equals("all")) {
-                        System.out.println(YELLOW + "Running all tests" + RESET);
-                        junit.run(getAllTestClasses());
-                        return;
-                    }
-
                     TestArg test = new TestArg(args[0]);
                     System.out.println(YELLOW + "Running " + test + RESET);
                     Result result = junit.run(Request.method(test.getTestClass(), test.getMethod()));
                     exitCode = printResult(result, test.toString());
                 } else if (args.length == 2) {
+                    if (args[0].equals("all")) {
+                        TestArg polluterTest = new TestArg(args[1]);
+
+                        System.out.println(YELLOW + "Running polluter first" + RESET);
+                        junit.run(Request.aClass(polluterTest.getTestClass()).filterWith(new Filter() {
+                            @Override
+                            public boolean shouldRun(Description description) {
+                                return polluterTest.getMethod().equals(description.getMethodName());
+                            }
+
+                            @Override
+                            public String describe() {
+                                return "Only run polluter";
+                            }
+                        }));
+
+                        Request request = Request.classes(getAllTestClasses()).filterWith(new Filter() {
+                            @Override
+                            public boolean shouldRun(Description description) {
+                                return !polluterTest.getMethod().equals(description.getMethodName());
+                            }
+
+                            @Override
+                            public String describe() {
+                                return "Don't rerun polluter";
+                            }
+                        });
+
+                        // TODO: WHY NO CLASS DEF FOUND ERROR!
+
+                        System.out.println(YELLOW + "Running all tests" + RESET);
+                        junit.run(request);
+                        return;
+                    }
+
                     TestArg test1 = new TestArg(args[0]);
                     TestArg test2 = new TestArg(args[1]);
                     if (test1.getClassName().equals(test2.getClassName())) {
