@@ -1,15 +1,8 @@
 #!/bin/bash
 
-
-
-export JAVA_PROGRAM_ARGS=`echo "$@"`
-
-
+# this script should be run with cwd=project root.
 cwd=$(pwd)
-#cd "${cwd}"
-echo "${cwd}"
-
-
+echo "Finding patch in: $cwd"
 
 if [ ! -d .dtfixingtools/minimized/ ]; then
   mkdir -p .dtfixingtools/minimized/;
@@ -18,10 +11,8 @@ if [ ! -d .dtfixingtools/detection-results/ ]; then
   mkdir -p .dtfixingtools/detection-results/;
 fi
 
-
 # run patch program.
-mvn exec:java -Dexec.mainClass=Patch.Main -Dexec.args="$JAVA_PROGRAM_ARGS"
-
+java -cp "$(dirname "$0")/../target/classes" in.yulez.patch.Patch $@
 
 # execute idflakies on the mvn project to get fixier.
 mvn idflakies:fix

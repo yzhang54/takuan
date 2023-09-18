@@ -8,7 +8,8 @@ if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ] || [ "$4" = "" ] || [ "$5" = 
 fi
 
 cwd="$(pwd)"
-scriptDir="$(dirname "$0")"
+takuanRootDir="$(dirname "$0")"
+scriptsDir="$takuanRootDir/scripts"
 gitURL="$1"
 gitRepoName="$(basename "$gitURL" .git)"
 sha="$2"
@@ -36,7 +37,7 @@ if [[ -z "${NO_TEST}" ]]; then
     mvn compile
     mvn test-compile
     printf "\n\n\n\n\033[0;31mTest Run (Should Fail):\033[0m\n"
-    if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$scriptDir/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner "$polluter" "$victim"; then
+    if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$scriptsDir/runner-1.0-SNAPSHOT.jar" in.natelev.runner.Runner "$polluter" "$victim"; then
         printf "\n\n\033[0;31mERR: Test PV run did not fail!\033[0m Are the polluter and victim switched?\n"
         exit 1;
     fi
@@ -44,18 +45,18 @@ if [[ -z "${NO_TEST}" ]]; then
 fi
 
 if [[ -z "${NO_GEN}" ]]; then
-    INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
+    INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptsDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
 fi
 
 PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.csv"
 if [[ -z "${NO_DIFF}" ]]; then
-    "$scriptDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv" \
+    "$scriptsDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv" \
     --problem-invariants-output "$PROBLEM_INVARIANTS_OUTPUT"
 fi
 
 if [[ -z "${NO_FIND_CLEANER}" ]]; then
     if [[ -f "$PROBLEM_INVARIANTS_OUTPUT" ]]; then
-        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' --instrument-only="$INSTRUMENT_ONLY" --problem-invariants-file="$PROBLEM_INVARIANTS_OUTPUT" in.natelev.runner.Runner all $polluter
+        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' --instrument-only="$INSTRUMENT_ONLY" --problem-invariants-file="$PROBLEM_INVARIANTS_OUTPUT" in.natelev.runner.Runner all $polluter
         if [[ -z "${LEAVE_PROBLEM_INVS}" ]]; then
             rm "$PROBLEM_INVARIANTS_OUTPUT"
         fi
