@@ -2,11 +2,11 @@
 
 trap "exit" INT
 
-if [[ -z "${NO_DYNCOMP}" ]]; then
-    COMPARABILITY_FILE='--comparability-file=Runner.decls-DynComp'
-else
-    COMPARABILITY_FILE=''
-fi
+# if [[ -z "${NO_DYNCOMP}" ]]; then
+#     COMPARABILITY_FILE='--comparability-file=Runner.decls-DynComp'
+# else
+#     COMPARABILITY_FILE=''
+# fi
 
 if [[ -n "${IGNORED_CLASSES}" ]]; then
     BOOT_CLASSES="--boot-classes=$IGNORED_CLASSES"
@@ -26,18 +26,18 @@ run_daikon() {
     shift; shift
 
     if [ "$SHOULD" = "pass" ]; then
-        if [[ -z "${NO_DYNCOMP}" ]]; then
-            # TODO: we should retry if it fails, but only if it fails for an actual reason, not because of the various DynComp bugs
-            java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
-        fi
+        # if [[ -z "${NO_DYNCOMP}" ]]; then
+        #     # TODO: we should retry if it fails, but only if it fails for an actual reason, not because of the various DynComp bugs
+        #     java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
+        # fi
 
         while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY in.natelev.runner.Runner $@
         do echo "Re-trying daikon.Chicory because the test(s) failed..."; sleep 1; done;
     else 
-        if [[ -z "${NO_DYNCOMP}" ]]; then
-            while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
-            do echo "Re-trying daikon.DynComp because the test(s) passed..."; sleep 1; done;
-        fi
+        # if [[ -z "${NO_DYNCOMP}" ]]; then
+        #     while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
+        #     do echo "Re-trying daikon.DynComp because the test(s) passed..."; sleep 1; done;
+        # fi
 
         while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$(dirname "$0")/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY in.natelev.runner.Runner $@
         do echo "Re-trying daikon.Chicory because the test(s) passed..."; sleep 1; done;
@@ -52,7 +52,7 @@ run_daikon() {
     gunzip -f "daikon-$TYPE.inv.gz"
 
     rm Runner.dtrace.gz
-    [[ -z "${NO_DYNCOMP}" ]] && rm Runner.decls-DynComp
+    # [[ -z "${NO_DYNCOMP}" ]] && rm Runner.decls-DynComp
 
     echo "Completed '$TYPE'. Daikon text output is in daikon-$TYPE.log, binary output is in daikon-$TYPE.inv"
 }
@@ -80,7 +80,6 @@ else
     run_daikon "pv" "fail" "$POLLUTER" "$VICTIM"
     run_daikon "polluter" "pass" "$POLLUTER"
     run_daikon "victim" "pass" "$VICTIM"
-    run_daikon "all" "pass" "all"
 fi;
 
 

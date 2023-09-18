@@ -1,10 +1,12 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import daikon.PptTopLevel.PptType;
 
@@ -109,6 +111,50 @@ public class DiffedInvs {
         for (ReducedInvariant inv : victimInvs) {
             builder.append(GREEN + "    .v> " + RESET + inv.getUniquelyHadIfNeeded(pvInvs) + "\n");
         }
+        return builder.toString();
+    }
+
+    public String toCSV() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(Output.cleanMsgOfColorsIfNeeded(pptName + "!,!"));
+
+        builder.append(
+                pvInvs.stream().map((inv) -> {
+                    if (inv.getEqValues() != null) {
+                        if (inv.firstVar().startsWith("p("))
+                            return null;
+
+                        List<String> diffed = inv.diffEqValues(victimInvs);
+                        if (diffed == null || diffed.size() == 0)
+                            return null;
+
+                        return inv.fullFirstVar() + "!=!" + String.join("!&!", diffed);
+                    }
+                    return null;
+                })
+                        .filter(s -> s != null)
+                        .collect(Collectors.joining("!|!")));
+
+        builder.append("!,!");
+
+        builder.append(
+                victimInvs.stream().map((inv) -> {
+                    if (inv.getEqValues() != null) {
+                        if (inv.firstVar().startsWith("p("))
+                            return null;
+
+                        List<String> diffed = Arrays.asList(inv.getEqValues());
+                        if (diffed == null || diffed.size() == 0)
+                            return null;
+
+                        return inv.fullFirstVar() + "!=!" + String.join("!&!", diffed);
+                    }
+                    return null;
+                })
+                        .filter(s -> s != null)
+                        .collect(Collectors.joining("!|!")));
+
         return builder.toString();
     }
 

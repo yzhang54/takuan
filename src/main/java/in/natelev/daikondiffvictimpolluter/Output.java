@@ -19,8 +19,8 @@ public class Output {
 
     public static void shutdown() {
         if (outputWriter != null) {
-            log(GREEN + "\u2713 Successfully wrote to " + file + RESET);
             outputWriter.close();
+            log(GREEN + "\u2713 Successfully wrote to " + file + RESET);
         }
     }
 
@@ -45,7 +45,7 @@ public class Output {
             outputWriter.println(cleanMsgOfColorsIfNeeded(msg));
     }
 
-    private static String cleanMsgOfColorsIfNeeded(String msg) {
+    public static String cleanMsgOfColorsIfNeeded(String msg) {
         if (outputColorsToFile) {
             return msg;
         } else {

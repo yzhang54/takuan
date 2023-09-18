@@ -15,13 +15,15 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
     private String value;
     private String[] variables;
     private String[] eqValues = null;
+    private String fullFirstVariable; // includes postfix
     private String type;
 
-    ReducedInvariant(String value, String[] variables, String type, String[] eqValues) {
+    ReducedInvariant(String value, String[] variables, String type, String[] eqValues, String fullFirstVariable) {
         this.value = value;
         this.variables = variables;
         this.type = type;
         this.eqValues = eqValues;
+        this.fullFirstVariable = fullFirstVariable;
     }
 
     public boolean hasSameFirstVariableAs(ReducedInvariant other) {
@@ -48,6 +50,10 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         } else {
             return null;
         }
+    }
+
+    public String fullFirstVar() {
+        return fullFirstVariable;
     }
 
     public String getType() {
@@ -116,7 +122,7 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     String[] variables = new String[invariant.ppt.var_infos.length];
                     for (int i = 0; i < invariant.ppt.var_infos.length; i++) {
                         VarInfo varInfo = invariant.ppt.var_infos[i];
-                        boolean isParam = varInfo.isDerivedParam();
+                        boolean isParam = varInfo.isDerivedParam() && !varInfo.name().startsWith("this.");
                         String name = varInfo.name();
 
                         if (varInfo.isPrestate()) {
@@ -151,9 +157,12 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                         eqValues = Arrays.stream(((OneOfScalar) invariant).getElts()).mapToObj(String::valueOf)
                                 .toArray(String[]::new);
                     }
+
+                    String firstVar = invariant.ppt.var_infos.length > 0 ? invariant.ppt.var_infos[0].name() : null;
+
                     return new ReducedInvariant(
                             invariant.toString(),
-                            variables, invariant.getClass().getName(), eqValues);
+                            variables, invariant.getClass().getName(), eqValues, firstVar);
                 })
                 .sorted()
                 .collect(Collectors.toList());

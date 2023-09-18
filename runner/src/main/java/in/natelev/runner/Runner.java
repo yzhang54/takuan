@@ -12,6 +12,7 @@ import org.junit.runner.Request;
 import org.junit.runner.Result;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
 
 public class Runner {
     public static String RESET = "";
@@ -72,8 +73,6 @@ public class Runner {
                                 return "Don't rerun polluter";
                             }
                         });
-
-                        // TODO: WHY NO CLASS DEF FOUND ERROR!
 
                         System.out.println(YELLOW + "Running all tests" + RESET);
                         junit.run(request);

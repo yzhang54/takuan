@@ -14,6 +14,7 @@ gitRepoName="$(basename "$gitURL" .git)"
 sha="$2"
 victim="$3"
 polluter="$4"
+INSTRUMENT_ONLY="$5"
 
 if [[ -z "${NO_CLONE}" ]]; then
     git clone "$gitURL"
@@ -46,7 +47,20 @@ if [[ -z "${NO_GEN}" ]]; then
     INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
 fi
 
-"$scriptDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv"
+PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.csv"
+if [[ -z "${NO_DIFF}" ]]; then
+    "$scriptDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv" \
+    --problem-invariants-output "$PROBLEM_INVARIANTS_OUTPUT"
+fi
+
+if [[ -z "${NO_FIND_CLEANER}" ]]; then
+    if [[ -f "$PROBLEM_INVARIANTS_OUTPUT" ]]; then
+        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' --instrument-only="$INSTRUMENT_ONLY" --problem-invariants-file="$PROBLEM_INVARIANTS_OUTPUT" in.natelev.runner.Runner all $polluter
+        if [[ -z "${LEAVE_PROBLEM_INVS}" ]]; then
+            rm "$PROBLEM_INVARIANTS_OUTPUT"
+        fi
+    fi
+fi
 
 if [[ -n "${CREATE_GISTS}" ]]; then
     CLIARGS="$@"

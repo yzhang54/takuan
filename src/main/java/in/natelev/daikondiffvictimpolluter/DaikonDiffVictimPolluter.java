@@ -5,7 +5,9 @@ import daikon.PptTopLevel.PptType;
 import in.natelev.daikondiffvictimpolluter.DiffedInvs.DiffedInvsByVarMap;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +17,8 @@ import static in.natelev.daikondiffvictimpolluter.Colors.*;
 import static in.natelev.daikondiffvictimpolluter.Output.*;
 
 public class DaikonDiffVictimPolluter {
-    private static int MAX_RANKED_OUTPUT_INVARIANTS = 3;
+    private static int MAX_RANKED_OUTPUT_INVARIANTS = 5;
+    private static File problemInvariantsOutputFile;
 
     public static void main(String[] args) {
         if (args.length < 3) {
@@ -24,6 +27,7 @@ public class DaikonDiffVictimPolluter {
 
         if (args.length > 3) {
             boolean lookingForOutput = false;
+            boolean lookingForProblemInvariantsOutput = false;
             for (String arg : Arrays.asList(args).subList(3, args.length)) {
                 if (lookingForOutput) {
                     lookingForOutput = false;
@@ -35,6 +39,11 @@ public class DaikonDiffVictimPolluter {
                     }
                 } else if (arg.equals("-o")) {
                     lookingForOutput = true;
+                } else if (lookingForProblemInvariantsOutput) {
+                    lookingForProblemInvariantsOutput = false;
+                    problemInvariantsOutputFile = new File(arg);
+                } else if (arg.equals("--problem-invariants-output")) {
+                    lookingForProblemInvariantsOutput = true;
                 } else if (arg.equals("-h")) {
                     printUsage();
                 } else if (arg.equals("--debug")) {
@@ -71,7 +80,21 @@ public class DaikonDiffVictimPolluter {
 
         log(BLUE + "Diffing..." + RESET);
         ArrayList<DiffedInvs> rankedDiffedInvs = diffAndRank(pvMinusP, victim);
-        log(GREEN + "Finished diffing. Now attempting to find root cause methods..." + RESET);
+        log(GREEN + "Finished diffing." + RESET);
+
+        if (problemInvariantsOutputFile != null) {
+            try (PrintWriter problemInvariantsOutputWriter = new PrintWriter(problemInvariantsOutputFile)) {
+                for (DiffedInvs diffedInvs : rankedDiffedInvs) {
+                    problemInvariantsOutputWriter.println(diffedInvs.toCSV());
+                }
+                problemInvariantsOutputWriter.flush();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            log(BLUE + "Outputted problem invariants to " + problemInvariantsOutputFile.getPath() + RESET);
+        }
+
+        log("Now attempting to find root cause methods...");
 
         ArrayList<String> possibleRootCauseMethods = new ArrayList<>();
         if (rankedDiffedInvs.size() == 0) {
@@ -101,7 +124,7 @@ public class DaikonDiffVictimPolluter {
 
     private static void printUsage() {
         System.err.println(
-                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file)"
+                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file) (--cleaner-finder-output-file file.csv)"
                         + RESET);
         System.exit(1);
     }
