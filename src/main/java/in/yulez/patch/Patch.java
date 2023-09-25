@@ -1,33 +1,38 @@
 package in.yulez.patch;
 
-import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class Patch {
-	public static void main(String[] args) {
-		if (args.length != 3) {
-			System.err.println("Usage: <polluter> <victim> <cleanerFilePath>");
+	public static void main(String[] args) throws ParseException {
+		if (args.length != 4) {
+			System.err.println("Usage: <polluter> <victim> <cleanerJsonFilePath> <mvnProejctPath>");
 			System.exit(1);
 			return;
 		}
 
 		String polluter = args[0];
 		String victim = args[1];
-		String cleanerFilePath = args[2];
+		String cleanerJsonFilePath = args[2];
+		String mvnProejctPath = args[3];
 
 		try {
-			generateJson(polluter, victim, cleanerFilePath);
+			generateJson(polluter, victim, cleanerJsonFilePath, mvnProejctPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
-	public static void generateJson(String polluter, String victim, String cleanerFilePath) throws IOException {
+	public static void generateJson(String polluter, String victim, String cleanerJsonFilePath, String mvnProejctPath) throws IOException, ParseException {
+
+
+		
 		JSONObject minimizedJson = new JSONObject();
 		JSONObject expectedRun = new JSONObject();
 		JSONObject time = new JSONObject();
@@ -48,17 +53,20 @@ public class Patch {
 		minimizedJson.put("dependentTest", victim);
 		minimizedJson.put("polluters", pollutersArr);
 
-		File file = new File(cleanerFilePath);
-		Scanner sc = new Scanner(file);
+
 		JSONArray testOrder = new JSONArray();
 		JSONArray cleanerTests = new JSONArray();
 
-		while (sc.hasNextLine()) {
-			String cleaner = sc.nextLine();
-			cleanerTests.add(cleaner);
-			testOrder.add(cleaner);
-		}
-		sc.close();
+
+		JSONParser parser = new JSONParser();
+		System.out.println(cleanerJsonFilePath);
+		JSONObject json = (JSONObject) parser.parse(new FileReader(cleanerJsonFilePath));
+		JSONObject firstEle= (JSONObject) ((JSONArray) json.get("cleaners")).get(0);
+		String cleaner = (String) firstEle.get("testMethod");
+		
+		cleanerTests.add(cleaner);
+		testOrder.add(cleaner);
+
 
 		testOrder.add(polluter);
 		testOrder.add(victim);
@@ -90,14 +98,14 @@ public class Patch {
 
 		cleanersJson.put("cleanerTests", cleanerTests);
 
-		FileWriter minimizedOutput = new FileWriter(
+		FileWriter minimizedOutput = new FileWriter(mvnProejctPath+
 				".dtfixingtools/minimized/" + victim + "-" + hash + "-ERROR-dependencies.json");
 		minimizedOutput.write(minimizedJson.toJSONString());
 		minimizedOutput.close();
 
 		flakyListsJson.put("dts", dts);
 
-		FileWriter flakyLists = new FileWriter("/.dtfixingtools/detection-results/flaky-lists.json");
+		FileWriter flakyLists = new FileWriter(mvnProejctPath+"/.dtfixingtools/detection-results/flaky-lists.json");
 		flakyLists.write(flakyListsJson.toJSONString());
 		flakyLists.close();
 	}
