@@ -12,7 +12,8 @@ if [ ! -d .dtfixingtools/detection-results/ ]; then
 fi
 
 # run patch program.
-java -cp "$(dirname "$0")/../target/classes" in.yulez.patch.Patch $@
+SCRIPTS_DIR=$(dirname "$0")
+java -cp "$SCRIPTS_DIR/../target/classes:$SCRIPTS_DIR/../target/dependency/*" in.yulez.patch.Patch $@
 
 # execute idflakies on the mvn project to get fixier.
 mvn idflakies:fix
