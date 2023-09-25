@@ -9,3 +9,7 @@ sha="$2"
 module="$3" # may be empty if no module is set
 
 echo "TODO: implement setup"
+
+#Automatically setting up the mvn project's pom.xml for iFixFlakies
+bash pom-modify/modify-project.sh mvnProjectPath
+
