@@ -10,8 +10,9 @@ import org.json.simple.parser.ParseException;
 
 public class Patch {
 	public static void main(String[] args) throws ParseException {
+		
 		if (args.length != 4) {
-			System.err.println("Usage: <polluter> <victim> <cleanerJsonFilePath> <mvnProejctPath>");
+			System.err.println("Usage: <polluter> <victim> <cleanerJsonFilePath> <mvnProjectPath>");
 			System.exit(1);
 			return;
 		}
@@ -19,20 +20,20 @@ public class Patch {
 		String polluter = args[0];
 		String victim = args[1];
 		String cleanerJsonFilePath = args[2];
-		String mvnProejctPath = args[3];
+		String mvnProjectPath = args[3];
 
 		try {
-			generateJson(polluter, victim, cleanerJsonFilePath, mvnProejctPath);
+			generateJson(polluter, victim, cleanerJsonFilePath, mvnProjectPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 	}
 
-	public static void generateJson(String polluter, String victim, String cleanerJsonFilePath, String mvnProejctPath) throws IOException, ParseException {
+	public static void generateJson(String polluter, String victim, String cleanerJsonFilePath, String mvnProjectPath) throws IOException, ParseException {
 
 
-		
+
 		JSONObject minimizedJson = new JSONObject();
 		JSONObject expectedRun = new JSONObject();
 		JSONObject time = new JSONObject();
@@ -98,15 +99,16 @@ public class Patch {
 
 		cleanersJson.put("cleanerTests", cleanerTests);
 
-		FileWriter minimizedOutput = new FileWriter(mvnProejctPath+
+		FileWriter minimizedOutput = new FileWriter(mvnProjectPath+
 				".dtfixingtools/minimized/" + victim + "-" + hash + "-ERROR-dependencies.json");
 		minimizedOutput.write(minimizedJson.toJSONString());
 		minimizedOutput.close();
 
 		flakyListsJson.put("dts", dts);
 
-		FileWriter flakyLists = new FileWriter(mvnProejctPath+"/.dtfixingtools/detection-results/flaky-lists.json");
+		FileWriter flakyLists = new FileWriter(mvnProjectPath+"/.dtfixingtools/detection-results/flaky-lists.json");
 		flakyLists.write(flakyListsJson.toJSONString());
 		flakyLists.close();
+
 	}
 }
