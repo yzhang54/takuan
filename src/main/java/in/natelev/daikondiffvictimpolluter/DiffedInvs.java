@@ -158,6 +158,10 @@ public class DiffedInvs {
         return builder.toString();
     }
 
+    public String getPptName() {
+        return pptName;
+    }
+
     public static class DiffedInvsByVarMap {
         private HashMap<String, DiffedInvs> map = new HashMap<>();
 
