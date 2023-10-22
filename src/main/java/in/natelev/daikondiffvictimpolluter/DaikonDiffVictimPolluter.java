@@ -82,6 +82,14 @@ public class DaikonDiffVictimPolluter {
         ArrayList<DiffedInvs> rankedDiffedInvs = diffAndRank(pvMinusP, victim);
         log(GREEN + "Finished diffing." + RESET);
 
+        if (rankedDiffedInvs.size() == 0) {
+            log(RED + "No problem invariants found using current heuristics." + RESET);
+        } else {
+            log("Ppts of problem invs: " + RESET + String.join(", ",
+                    rankedDiffedInvs.stream().map((diffedInvs) -> diffedInvs.getPptName())
+                            .collect(Collectors.toList())));
+        }
+
         if (problemInvariantsOutputFile != null) {
             try (PrintWriter problemInvariantsOutputWriter = new PrintWriter(problemInvariantsOutputFile)) {
                 for (DiffedInvs diffedInvs : rankedDiffedInvs) {
@@ -94,6 +102,20 @@ public class DaikonDiffVictimPolluter {
             log(BLUE + "Outputted problem invariants to " + problemInvariantsOutputFile.getPath() + RESET);
         }
 
+        Output.shutdown();
+    }
+
+    private static void printUsage() {
+        System.err.println(
+                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file) (--cleaner-finder-output-file file.csv)"
+                        + RESET);
+        System.exit(1);
+    }
+
+    // currently unused, could be called from inside `main`
+    @SuppressWarnings("unused")
+    private static void findRootCause(ArrayList<DiffedInvs> rankedDiffedInvs, ReducedPptMap polluterVictim,
+            ReducedPptMap polluter, ReducedPptMap victim) {
         log("Now attempting to find root cause methods...");
 
         ArrayList<String> possibleRootCauseMethods = new ArrayList<>();
@@ -118,15 +140,6 @@ public class DaikonDiffVictimPolluter {
         } else {
             log(RED + "No possible root cause methods found.\n" + RESET);
         }
-
-        Output.shutdown();
-    }
-
-    private static void printUsage() {
-        System.err.println(
-                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file) (--cleaner-finder-output-file file.csv)"
-                        + RESET);
-        System.exit(1);
     }
 
     private static ReducedPptMap getPptMap(File file) {
