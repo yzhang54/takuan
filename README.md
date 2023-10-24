@@ -11,6 +11,8 @@ After doing so, run the following command:
 ./scripts/compile-takuan.sh
 ```
 
+jq is needed as a dependency (https://jqlang.github.io/jq/manual/). 
+
 ## Usage
 
 ### To automatically run all checks:
