@@ -33,16 +33,22 @@ run_daikon() {
         #     java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
         # fi
 
-        while ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY --disable-classfile-version-mismatch-warning in.natelev.runner.Runner $@
-        do echo "Re-trying daikon.Chicory because the test(s) failed..."; sleep 1; done;
+        if ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY --disable-classfile-version-mismatch-warning in.natelev.runner.Runner $@
+        then
+            echo "Getting invariants failed: daikon.Chicory returned a nonzero exit code when tests should've passed"
+            exit 1
+        fi
     else 
         # if [[ -z "${NO_DYNCOMP}" ]]; then
         #     while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.DynComp --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN in.natelev.runner.Runner $@
         #     do echo "Re-trying daikon.DynComp because the test(s) passed..."; sleep 1; done;
         # fi
 
-        while java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY --disable-classfile-version-mismatch-warning in.natelev.runner.Runner $@
-        do echo "Re-trying daikon.Chicory because the test(s) passed..."; sleep 1; done;
+        if java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' $PPT_SELECT_PATTERN $BOOT_CLASSES $COMPARABILITY_FILE $INSTRUMENT_ONLY --disable-classfile-version-mismatch-warning in.natelev.runner.Runner $@
+        then
+            echo "Getting invariants failed: daikon.Chicory returned a zero exit code when tests should've failed"
+            exit 1
+        fi
     fi
 
     echo "Running Daikon..."
