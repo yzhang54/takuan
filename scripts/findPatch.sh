@@ -1,24 +1,27 @@
 #!/bin/bash
 
+
+
 # this script should be run with cwd=project root.
-if [ "$#" != 4 ]; then
-    echo "Usage: ./findPatch.sh <polluter> <victim> <cleanerJsonFilePath> <mvnProjectLocalPath>"
+if [ "$#" != 3 ]; then
+    echo "Usage: ./findPatch.sh <polluter> <victim> <cleanerJsonFilePath>"
     exit 1;
 fi
 
 
 
-mvnProjectLocalPath="$4"
-minimizedPath="$mvnProjectLocalPath/.dtfixingtools/minimized/"
-detectionResultsPath="$mvnProjectLocalPath/.dtfixingtools/detection-results/"
-orginalOrderFilePath="$mvnProjectLocalPath/.dtfixingtools/original-order.json"
+minimizedPath="./.dtfixingtools/minimized/"
+detectionResultsPath="./.dtfixingtools/detection-results/"
+orginalOrderFilePath="./.dtfixingtools/original-order.json"
 polluter="$1"
 victim="$2"
 cleanerJsonFilePath="$3"
-resultFolderPath="$mvnProjectLocalPath/.dtfixingtools/test-runs/results"
+resultFolderPath="./.dtfixingtools/test-runs/results"
+
+echo "Usage: <polluter>:$1 <victim>:$2 <cleanerJsonFilePath>:$3"
 
 echo "Confirm that a suspected cleaner is a cleaner to ensure victim passes"
-mkdir -p $mvnProjectLocalPath/.dtfixingtools/
+mkdir -p ./.dtfixingtools/
 export cleanerName=$(jq -r '.cleaners[].testMethod' $cleanerJsonFilePath)
 cat > $orginalOrderFilePath << EOL
 $polluter
@@ -27,8 +30,7 @@ $victim
 EOL
 
 
-
-cd $mvnProjectLocalPath
+pwd
 mvn idflakies:detect -Ddetector.detector_type=original -Ddt.randomize.rounds=0 -Ddt.detector.original_order.all_must_pass=true -Ddt.original.order=$orginalOrderFilePath
 
 
@@ -60,7 +62,9 @@ fi
 
 
 SCRIPTS_DIR=$(dirname "$0")
-java -cp "$SCRIPTS_DIR/../target/classes:$SCRIPTS_DIR/../target/dependency/*" in.yulez.patch.Patch $@
+java -cp "$SCRIPTS_DIR/../target/classes:$SCRIPTS_DIR/../target/dependency/*" in.yulez.patch.Patch $@ $cwd
 # execute idflakies on the mvn project to get fixier.
-cd $mvnProjectLocalPath
+#cd $mvnProjectLocalPath
+echo "Finding patch in: $cwd"
+mvn clean install compile -Dmaven.test.skip=true
 mvn idflakies:fix
