@@ -9,9 +9,11 @@ sha="$2"
 module="$3"
 iDFlakiesLocalPath="$7"
 
+
 cwd="$(pwd)"
 #Automatically setting up the mvn project's pom.xml for iFixFlakies
 cd $iDFlakiesLocalPath
 bash pom-modify/modify-project.sh $cwd idflakies-maven-plugin 2.0.1-SNAPSHOT
 cd $cwd
 mvn clean install compile -Dmaven.test.skip=true
+

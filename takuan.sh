@@ -50,13 +50,21 @@ if [[ -z "${NO_TEST}" ]]; then
 fi
 
 if [[ -z "${NO_GEN}" ]]; then
-    INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptsDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
+    if ! INSTRUMENT_ONLY="$5" PPT_SELECT="$5" "$scriptsDir/daikon-gen-victim-polluter.sh" "$victim" "$polluter"
+    then
+        echo "Getting invariants failed. See error above for more information"
+        exit 1
+    fi
 fi
 
 PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.csv"
 if [[ -z "${NO_DIFF}" ]]; then
-    "$scriptsDir/daikon-diff-victim-polluter.sh" -o "$cwd/$gitRepoName.dinv" \
-        --problem-invariants-output "$PROBLEM_INVARIANTS_OUTPUT"
+    if ! java -cp "$takuanRootDir/target/classes:$DAIKONDIR/daikon.jar" -Xmx6g -XX:+UseG1GC in.natelev.daikondiffvictimpolluter.DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv \
+        -o "$cwd/$gitRepoName.dinv" --problem-invariants-output "$PROBLEM_INVARIANTS_OUTPUT"
+    then
+        echo "Problem invariant finding failed. See error above for more information"
+        exit 1
+    fi
 fi
 
 if [[ -z "${NO_FIND_CLEANER}" ]]; then

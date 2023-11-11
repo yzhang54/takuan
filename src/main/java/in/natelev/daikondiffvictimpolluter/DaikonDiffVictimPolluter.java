@@ -84,6 +84,7 @@ public class DaikonDiffVictimPolluter {
 
         if (rankedDiffedInvs.size() == 0) {
             log(RED + "No problem invariants found using current heuristics." + RESET);
+            System.exit(1);
         } else {
             log("Ppts of problem invs: " + RESET + String.join(", ",
                     rankedDiffedInvs.stream().map((diffedInvs) -> diffedInvs.getPptName())
@@ -98,6 +99,7 @@ public class DaikonDiffVictimPolluter {
                 problemInvariantsOutputWriter.flush();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
+                System.exit(1);
             }
             log(BLUE + "Outputted problem invariants to " + problemInvariantsOutputFile.getPath() + RESET);
         }

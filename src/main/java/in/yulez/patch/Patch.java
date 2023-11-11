@@ -10,12 +10,7 @@ import org.json.simple.parser.ParseException;
 
 public class Patch {
 	public static void main(String[] args) throws ParseException {
-		System.out.println(args.length);
-		System.out.println(args.toString());
-		System.out.println(args[0]);
-		System.out.println(args[1]);
-		System.out.println(args[2]);
-		System.out.println(args[3]);
+
 		if (args.length != 4) {
 			System.err.println("Usage: <polluter> <victim> <cleanerJsonFilePath> <mvnProjectPath>");
 			System.exit(1);
@@ -106,6 +101,7 @@ public class Patch {
 
 		FileWriter minimizedOutput = new FileWriter(mvnProjectPath+
 				"/.dtfixingtools/minimized/" + victim + "-" + hash + "-ERROR-dependencies.json");
+
 		minimizedOutput.write(minimizedJson.toJSONString());
 		minimizedOutput.close();
 
