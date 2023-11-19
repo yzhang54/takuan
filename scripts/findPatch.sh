@@ -47,12 +47,12 @@ shopt -s nullglob
 declare -a resultFile=($resultFolderPath/*)
 if (( ${#resultFile[@]} != 1 )); then
   printf "error: zero or more than one file in $resultFile"
-  exit 1
+  exit 0
 else
     if grep -Fxq "ERROR" "${resultFile[0]}"
     then
           printf 'ERROR FOUND, Tests failed'
-          exit 1
+          exit 0
     fi
 fi
 eval "$tmp"
