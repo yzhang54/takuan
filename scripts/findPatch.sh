@@ -11,7 +11,6 @@ fi
 
 
 
-
 minimizedPath="./.dtfixingtools/minimized/"
 detectionResultsPath="./.dtfixingtools/detection-results/"
 orginalOrderFilePath="./.dtfixingtools/original-order.json"
@@ -20,9 +19,12 @@ victim="$2"
 cleanerJsonFilePath="$3"
 resultFolderPath="./.dtfixingtools/test-runs/results"
 
-echo "Usage: <polluter>:$1 <victim>:$2 <cleanerJsonFilePath>:$3"
 
 echo "Confirm that a suspected cleaner is a cleaner to ensure victim passes"
+
+if [ ! -d "./.dtfixingtools" ]; then
+  mkdir -p "./.dtfixingtools";
+fi
 
 export cleanerName=$(jq -r '.cleaners[].testMethod' $cleanerJsonFilePath)
 cat > $orginalOrderFilePath << EOL
@@ -33,9 +35,11 @@ EOL
 
 
 
-
-cd $mvnProjectLocalPath
-mvn idflakies:detect -Ddetector.detector_type=original -Ddt.randomize.rounds=0 -Ddt.detector.original_order.all_must_pass=true -Ddt.original.order=$orginalOrderFilePath
+if ! mvn idflakies:detect -Ddetector.detector_type=original -Ddt.randomize.rounds=0 -Ddt.detector.original_order.all_must_pass=true -Ddt.original.order=$orginalOrderFilePath
+then 
+	echo "Failed to confirm a suspected cleaner is a cleaner"
+	exit 0
+fi 
 
 
 tmp=$(shopt -p nullglob || true)
