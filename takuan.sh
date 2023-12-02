@@ -85,7 +85,12 @@ if [[ -z "${NO_FIND_CLEANER}" ]]; then
             rm "$PROBLEM_INVARIANTS_OUTPUT"
         fi
 
-        "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
+        # if no iDFlakiesLocalPath, then warn user and exit
+        if [[ -z "${iDFlakiesLocalPath}" ]]; then
+            echo "Warning: no iDFlakiesLocalPath provided - will not attempt to find the patch"
+        else
+            "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
+        fi
     fi
 fi
 
