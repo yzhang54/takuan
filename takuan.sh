@@ -16,16 +16,14 @@ sha="$2"
 victim="$3"
 polluter="$4"
 INSTRUMENT_ONLY="$5"
+# arg 6 (module) is handled below
 iDFlakiesLocalPath="$7"
-
-
 
 if [[ -z "${NO_CLONE}" ]]; then
     git clone "$gitURL"
     cd "$gitRepoName"
     git checkout "$sha"
 fi
-
 
 if [ "${6}" != "." ]; then
     module="$6"
@@ -35,7 +33,6 @@ else
     [[ -z "${NO_INSTALL}" ]] && mvn install -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
 fi
 
-"$scriptsDir/setup.sh" $@
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
     mvn package -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
@@ -84,7 +81,8 @@ if [[ -z "${NO_FIND_CLEANER}" ]]; then
         if [[ -z "${LEAVE_PROBLEM_INVS}" ]]; then
             rm "$PROBLEM_INVARIANTS_OUTPUT"
         fi
-    "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
+
+        "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
     fi
 fi
 
