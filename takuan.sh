@@ -33,6 +33,9 @@ else
     [[ -z "${NO_INSTALL}" ]] && mvn install -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
 fi
 
+# TODO: When we switch to `setup.sh` for all setup, remove this
+"$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
     mvn package -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
