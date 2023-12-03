@@ -89,5 +89,3 @@ else
     run_daikon "polluter" "pass" "$POLLUTER"
     run_daikon "victim" "pass" "$VICTIM"
 fi;
-
-

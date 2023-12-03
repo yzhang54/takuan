@@ -3,7 +3,7 @@
 trap "exit" INT
 
 if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ] || [ "$4" = "" ] || [ "$5" = "" ]; then
-    echo "Usage: ./takuan.sh <gitURL> <sha> <victim> <polluter> <package> (<module>)"
+    echo "Usage: ./takuan.sh <gitURL> <sha> <victim> <polluter> <package> <module> <iDFlakiesLocalPath> "
     exit 1;
 fi
 
@@ -16,6 +16,8 @@ sha="$2"
 victim="$3"
 polluter="$4"
 INSTRUMENT_ONLY="$5"
+# arg 6 (module) is handled below
+iDFlakiesLocalPath="$7"
 
 if [[ -z "${NO_CLONE}" ]]; then
     git clone "$gitURL"
@@ -23,13 +25,16 @@ if [[ -z "${NO_CLONE}" ]]; then
     git checkout "$sha"
 fi
 
-if [[ -n "${6}" ]]; then
+if [ "${6}" != "." ]; then
     module="$6"
     [[ -z "${NO_INSTALL}" ]] && mvn install -pl "$module" -am -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
     cd "$module"
 else
     [[ -z "${NO_INSTALL}" ]] && mvn install -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
 fi
+
+# TODO: When we switch to `setup.sh` for all setup, remove this
+"$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
 
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
@@ -64,16 +69,27 @@ fi
 
 if [[ -z "${NO_FIND_CLEANER}" ]]; then
     if [[ -f "$PROBLEM_INVARIANTS_OUTPUT" ]]; then
-        java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' \
+        if ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' \
             --instrument-only="$INSTRUMENT_ONLY" --problem-invariants-file="$PROBLEM_INVARIANTS_OUTPUT" \
             --cleaners-output-file "$cwd/!-$gitRepoName-cleaners.json" --disable-classfile-version-mismatch-warning \
             in.natelev.runner.Runner all $polluter
+        then
+            echo "No cleaner found"
+            exit 1
+        fi
 
         echo "Cleaners outputted to $cwd/!-$gitRepoName-cleaners.json"
         cat "$cwd/!-$gitRepoName-cleaners.json"
 
         if [[ -z "${LEAVE_PROBLEM_INVS}" ]]; then
             rm "$PROBLEM_INVARIANTS_OUTPUT"
+        fi
+
+        # if no iDFlakiesLocalPath, then warn user and exit
+        if [[ -z "${iDFlakiesLocalPath}" ]]; then
+            echo "Warning: no iDFlakiesLocalPath provided - will not attempt to find the patch"
+        else
+            "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
         fi
     fi
 fi
