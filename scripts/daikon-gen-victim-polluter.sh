@@ -25,6 +25,7 @@ fi
 run_daikon() {
     local TYPE=$1
     local SHOULD=$2
+    local START_TIME=$(date +%s)
     shift; shift
 
     if [ "$SHOULD" = "pass" ]; then
@@ -63,6 +64,7 @@ run_daikon() {
     # [[ -z "${NO_DYNCOMP}" ]] && rm Runner.decls-DynComp
 
     echo "Completed '$TYPE'. Daikon text output is in daikon-$TYPE.log, binary output is in daikon-$TYPE.inv"
+    echo "[!] [$TYPE] Took $(( $(date +%s) - $START_TIME ))s"
 }
 
 if [ "$1" = "" ] || [ "$2" = "" ]; then
@@ -76,14 +78,6 @@ elif [ "$1" = "test" ]; then
 else
     VICTIM=$1
     POLLUTER=$2
-
-    # if you are in a multi-module project, you may have to go to the project root and run `mvn install`
-    if [[ -z "${NO_RECOMPILATION}" ]]; then
-        mvn dependency:copy-dependencies
-        mvn package -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
-        mvn compile
-        mvn test-compile
-    fi
 
     run_daikon "pv" "fail" "$POLLUTER" "$VICTIM"
     run_daikon "polluter" "pass" "$POLLUTER"
