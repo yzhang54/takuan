@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.apache.commons.text.StringEscapeUtils;
 import daikon.PptTopLevel;
 import daikon.VarInfo;
 import daikon.VarInfo.VarFlags;
@@ -83,7 +83,6 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
         if (eqValues == null || !getType().contains("OneOf"))
             return null;
 
-        boolean uniquesFound = false;
         List<String> uniquelyHad = new ArrayList<>();
         loopOverEqValues: for (String eqValue : eqValues) {
             if (eqValue == null)
@@ -92,22 +91,17 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
             for (ReducedInvariant otherInv : otherList) {
                 if (hasSameFirstVariableAs(otherInv) && otherInv.eqValues != null) {
                     for (String otherEqValue : otherInv.eqValues) {
-                        if (otherInv == null)
-                            continue;
                         if (otherEqValue != null && eqValue.equals(otherEqValue)) {
-                            if (!uniquesFound)
-                                uniquesFound = true;
-
                             continue loopOverEqValues;
                         }
                     }
                 }
 
-                uniquelyHad.add(eqValue);
+                uniquelyHad.add(StringEscapeUtils.escapeJava(eqValue));
             }
         }
 
-        return uniquesFound ? uniquelyHad : null;
+        return uniquelyHad.size() > 0 ? uniquelyHad : Arrays.asList(eqValues);
     }
 
     public static List<ReducedInvariant> getFromPptTopLevel(PptTopLevel pptTopLevel) {
@@ -153,7 +147,7 @@ public class ReducedInvariant implements Comparable<ReducedInvariant> {
                     String[] eqValues = null;
                     if (invariant instanceof OneOfString) {
                         eqValues = ((OneOfString) invariant).getElts();
-                    } else if (invariant instanceof OneOfScalar) {
+                    } else if (invariant instanceof OneOfScalar && !((OneOfScalar) invariant).is_hashcode()) {
                         eqValues = Arrays.stream(((OneOfScalar) invariant).getElts()).mapToObj(String::valueOf)
                                 .toArray(String[]::new);
                     }

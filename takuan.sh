@@ -34,7 +34,9 @@ else
 fi
 
 # TODO: When we switch to `setup.sh` for all setup, remove this
-"$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+if [[ -z "${NO_SETUP}" ]]; then
+    "$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+fi
 
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
@@ -57,7 +59,7 @@ if [[ -z "${NO_GEN}" ]]; then
     fi
 fi
 
-PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.csv"
+PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.pvi"
 if [[ -z "${NO_DIFF}" ]]; then
     PROBLEM_INV_START_TIME=$(date +%s)
     if ! java -cp "$takuanRootDir/target/classes:$DAIKONDIR/daikon.jar" -Xmx6g -XX:+UseG1GC in.natelev.daikondiffvictimpolluter.DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv \
@@ -66,6 +68,7 @@ if [[ -z "${NO_DIFF}" ]]; then
         echo "Problem invariant finding failed. See error above for more information"
         exit 1
     fi
+    cat $PROBLEM_INVARIANTS_OUTPUT
     echo "[!] [P-Inv] Took $(( $(date +%s) - $PROBLEM_INV_START_TIME ))s"
 fi
 
