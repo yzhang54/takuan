@@ -34,7 +34,9 @@ else
 fi
 
 # TODO: When we switch to `setup.sh` for all setup, remove this
-"$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+if [[ -z "${NO_SETUP}" ]]; then
+    "$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+fi
 
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
@@ -57,17 +59,21 @@ if [[ -z "${NO_GEN}" ]]; then
     fi
 fi
 
-PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.csv"
+PROBLEM_INVARIANTS_OUTPUT="$cwd/tmp-$gitRepoName-problem-invariants.pvi"
 if [[ -z "${NO_DIFF}" ]]; then
+    PROBLEM_INV_START_TIME=$(date +%s)
     if ! java -cp "$takuanRootDir/target/classes:$DAIKONDIR/daikon.jar" -Xmx6g -XX:+UseG1GC in.natelev.daikondiffvictimpolluter.DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv \
         -o "$cwd/$gitRepoName.dinv" --problem-invariants-output "$PROBLEM_INVARIANTS_OUTPUT"
     then
         echo "Problem invariant finding failed. See error above for more information"
         exit 1
     fi
+    cat $PROBLEM_INVARIANTS_OUTPUT
+    echo "[!] [P-Inv] Took $(( $(date +%s) - $PROBLEM_INV_START_TIME ))s"
 fi
 
 if [[ -z "${NO_FIND_CLEANER}" ]]; then
+    CLEANER_FINDER_START_TIME=$(date +%s)
     if [[ -f "$PROBLEM_INVARIANTS_OUTPUT" ]]; then
         if ! java -cp "./target/dependency/*:./target/classes:./target/test-classes:$DAIKONDIR/daikon.jar:$scriptsDir/runner-1.0-SNAPSHOT.jar:$CLASSPATH" daikon.Chicory --ppt-omit-pattern='org.junit|junit.framework|junit.runner|com.sun.proxy|javax.servlet|org.hamcrest|in.natelev.runner|groovyjarjarasm.asm' \
             --instrument-only="$INSTRUMENT_ONLY" --problem-invariants-file="$PROBLEM_INVARIANTS_OUTPUT" \
@@ -92,6 +98,7 @@ if [[ -z "${NO_FIND_CLEANER}" ]]; then
             "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
         fi
     fi
+    echo "[!] [Cleaner-Finder] Took $(( $(date +%s) - $CLEANER_FINDER_START_TIME ))s"
 fi
 
 if [[ -n "${CREATE_GISTS}" ]]; then

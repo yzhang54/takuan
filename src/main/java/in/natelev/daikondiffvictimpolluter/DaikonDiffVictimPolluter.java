@@ -94,7 +94,7 @@ public class DaikonDiffVictimPolluter {
         if (problemInvariantsOutputFile != null) {
             try (PrintWriter problemInvariantsOutputWriter = new PrintWriter(problemInvariantsOutputFile)) {
                 for (DiffedInvs diffedInvs : rankedDiffedInvs) {
-                    problemInvariantsOutputWriter.println(diffedInvs.toCSV());
+                    problemInvariantsOutputWriter.print(diffedInvs.toPVI());
                 }
                 problemInvariantsOutputWriter.flush();
             } catch (FileNotFoundException e) {
@@ -109,7 +109,7 @@ public class DaikonDiffVictimPolluter {
 
     private static void printUsage() {
         System.err.println(
-                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file) (--cleaner-finder-output-file file.csv)"
+                RED + "Usage: DaikonDiffVictimPolluter daikon-pv.inv daikon-victim.inv daikon-polluter.inv (-o <output.dinv>) (--debug) (--output-colors-to-file) (--cleaner-finder-output-file file.pvi)"
                         + RESET);
         System.exit(1);
     }

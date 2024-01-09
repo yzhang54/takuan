@@ -1,7 +1,6 @@
 package in.natelev.daikondiffvictimpolluter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -114,48 +113,51 @@ public class DiffedInvs {
         return builder.toString();
     }
 
-    public String toCSV() {
+    public String toPVI() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append(Output.cleanMsgOfColorsIfNeeded(pptName + "!,!"));
+        builder.append(Output.cleanMsgOfColorsIfNeeded(pptName + "\n"));
 
-        builder.append(
-                pvInvs.stream().map((inv) -> {
-                    if (inv.getEqValues() != null) {
-                        if (inv.firstVar().startsWith("p("))
-                            return null;
+        List<String> pvPvis = invariantsToPvi(pvInvs);
 
-                        List<String> diffed = inv.diffEqValues(victimInvs);
-                        if (diffed == null || diffed.size() == 0)
-                            return null;
+        if (pvPvis.size() == 0) {
+            return "";
+        }
 
-                        return inv.fullFirstVar() + "!=!" + String.join("!&!", diffed);
-                    }
-                    return null;
-                })
-                        .filter(s -> s != null)
-                        .collect(Collectors.joining("!|!")));
+        builder.append("pv " + pvPvis.size() + "\n" +
+                String.join("\n", pvPvis));
 
-        builder.append("!,!");
+        builder.append("\n");
 
-        builder.append(
-                victimInvs.stream().map((inv) -> {
-                    if (inv.getEqValues() != null) {
-                        if (inv.firstVar().startsWith("p("))
-                            return null;
+        List<String> victimPvis = invariantsToPvi(victimInvs);
 
-                        List<String> diffed = Arrays.asList(inv.getEqValues());
-                        if (diffed == null || diffed.size() == 0)
-                            return null;
+        if (victimPvis.size() == 0) {
+            return "";
+        }
 
-                        return inv.fullFirstVar() + "!=!" + String.join("!&!", diffed);
-                    }
-                    return null;
-                })
-                        .filter(s -> s != null)
-                        .collect(Collectors.joining("!|!")));
+        builder.append("v " + victimPvis.size() + "\n" +
+                String.join("\n", victimPvis));
+
+        builder.append("\n");
 
         return builder.toString();
+    }
+
+    private List<String> invariantsToPvi(List<ReducedInvariant> invs) {
+        return invs.stream().map((inv) -> {
+            if (inv.getEqValues() != null) {
+                if (inv.firstVar().startsWith("p("))
+                    return null;
+
+                List<String> diffed = inv.diffEqValues(victimInvs);
+                if (diffed == null || diffed.size() == 0)
+                    return null;
+
+                return inv.fullFirstVar() + " " + diffed.size() + "\n" + String.join("\n", diffed);
+            }
+            return null;
+        })
+                .filter(s -> s != null).collect(Collectors.toList());
     }
 
     public String getPptName() {
