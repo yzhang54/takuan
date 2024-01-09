@@ -62,7 +62,7 @@ public class Runner {
                     });
                     junit.run(polluterRequest);
 
-                    polluterRerunner = new PolluterRerunner(polluterRequest);
+                    polluterRerunner = new PolluterRerunner(polluterRequest, junit);
 
                     Request request = Request.classes(getAllTestClasses()).filterWith(new Filter() {
                         @Override
