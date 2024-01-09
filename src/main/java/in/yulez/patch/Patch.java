@@ -10,7 +10,6 @@ import org.json.simple.parser.ParseException;
 
 public class Patch {
 	public static void main(String[] args) throws ParseException {
-
 		if (args.length != 4) {
 			System.err.println("Usage: <polluter> <victim> <cleanerJsonFilePath> <mvnProjectPath>");
 			System.exit(1);
@@ -27,12 +26,11 @@ public class Patch {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
-	public static void generateJson(String polluter, String victim, String cleanerJsonFilePath, String mvnProjectPath) throws IOException, ParseException {
-
-
+	public static void generateJson(String polluter, String victim, String cleanerJsonFilePath, String mvnProjectPath)
+			throws IOException, ParseException {
 
 		JSONObject minimizedJson = new JSONObject();
 		JSONObject expectedRun = new JSONObject();
@@ -54,20 +52,17 @@ public class Patch {
 		minimizedJson.put("dependentTest", victim);
 		minimizedJson.put("polluters", pollutersArr);
 
-
 		JSONArray testOrder = new JSONArray();
 		JSONArray cleanerTests = new JSONArray();
-
 
 		JSONParser parser = new JSONParser();
 		System.out.println(cleanerJsonFilePath);
 		JSONObject json = (JSONObject) parser.parse(new FileReader(cleanerJsonFilePath));
-		JSONObject firstEle= (JSONObject) ((JSONArray) json.get("cleaners")).get(0);
+		JSONObject firstEle = (JSONObject) ((JSONArray) json.get("cleaners")).get(0);
 		String cleaner = (String) firstEle.get("testMethod");
-		
+
 		cleanerTests.add(cleaner);
 		testOrder.add(cleaner);
-
 
 		testOrder.add(polluter);
 		testOrder.add(victim);
@@ -99,7 +94,7 @@ public class Patch {
 
 		cleanersJson.put("cleanerTests", cleanerTests);
 
-		FileWriter minimizedOutput = new FileWriter(mvnProjectPath+
+		FileWriter minimizedOutput = new FileWriter(mvnProjectPath +
 				"/.dtfixingtools/minimized/" + victim + "-" + hash + "-ERROR-dependencies.json");
 
 		minimizedOutput.write(minimizedJson.toJSONString());
@@ -107,7 +102,7 @@ public class Patch {
 
 		flakyListsJson.put("dts", dts);
 
-		FileWriter flakyLists = new FileWriter(mvnProjectPath+"/.dtfixingtools/detection-results/flaky-lists.json");
+		FileWriter flakyLists = new FileWriter(mvnProjectPath + "/.dtfixingtools/detection-results/flaky-lists.json");
 		flakyLists.write(flakyListsJson.toJSONString());
 		flakyLists.close();
 

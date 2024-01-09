@@ -16,16 +16,14 @@ sha="$2"
 victim="$3"
 polluter="$4"
 INSTRUMENT_ONLY="$5"
+# arg 6 (module) is handled below
 iDFlakiesLocalPath="$7"
-
-
 
 if [[ -z "${NO_CLONE}" ]]; then
     git clone "$gitURL"
     cd "$gitRepoName"
     git checkout "$sha"
 fi
-
 
 if [ "${6}" != "." ]; then
     module="$6"
@@ -35,7 +33,9 @@ else
     [[ -z "${NO_INSTALL}" ]] && mvn install -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
 fi
 
-"$scriptsDir/setup.sh" $@
+# TODO: When we switch to `setup.sh` for all setup, remove this
+"$scriptsDir/setup.sh" "$gitURL" "$sha" "$module" "$iDFlakiesLocalPath"
+
 if [[ -z "${NO_TEST}" ]]; then
     mvn dependency:copy-dependencies
     mvn package -Dmaven.test.skip=true -Ddependency-check.skip=true -Dmaven.javadoc.skip=true
@@ -84,7 +84,13 @@ if [[ -z "${NO_FIND_CLEANER}" ]]; then
         if [[ -z "${LEAVE_PROBLEM_INVS}" ]]; then
             rm "$PROBLEM_INVARIANTS_OUTPUT"
         fi
-    "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
+
+        # if no iDFlakiesLocalPath, then warn user and exit
+        if [[ -z "${iDFlakiesLocalPath}" ]]; then
+            echo "Warning: no iDFlakiesLocalPath provided - will not attempt to find the patch"
+        else
+            "$scriptsDir/findPatch.sh" "$polluter" "$victim" "$cwd/!-$gitRepoName-cleaners.json" 
+        fi
     fi
 fi
 
