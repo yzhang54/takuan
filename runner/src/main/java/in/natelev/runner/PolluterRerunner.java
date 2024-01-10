@@ -13,11 +13,13 @@ import org.junit.runners.model.FrameworkMethod;
 public class PolluterRerunner {
     private Method runChildMethod;
     private BlockJUnit4ClassRunner runner;
+    private String polluterMethodName;
 
     private static boolean shouldRunPolluterNext = false;
 
-    PolluterRerunner(Request polluterRequest, JUnitCore junit) {
+    PolluterRerunner(Request polluterRequest, JUnitCore junit, String polluterMethodName) {
         runner = (BlockJUnit4ClassRunner) polluterRequest.getRunner();
+        this.polluterMethodName = polluterMethodName;
 
         try {
             runChildMethod = BlockJUnit4ClassRunner.class.getDeclaredMethod("runChild",
@@ -43,11 +45,11 @@ public class PolluterRerunner {
     }
 
     private void rerunPolluterImmediately() {
-        System.out.println("Rerunning: " + runner.getTestClass().getJavaClass().getName());
+        System.out.println("Rerunning: " + runner.getTestClass().getJavaClass().getName() + "." + polluterMethodName);
         try {
             runChildMethod.invoke(runner,
                     new FrameworkMethod(
-                            runner.getTestClass().getJavaClass().getDeclaredMethod("testStringLog")),
+                            runner.getTestClass().getJavaClass().getDeclaredMethod(polluterMethodName)),
                     new RunNotifier());
         } catch (Exception e) {
             e.printStackTrace();

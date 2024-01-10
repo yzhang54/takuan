@@ -11,7 +11,6 @@ import org.junit.runner.Request;
 import org.junit.runner.Result;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.Failure;
-import org.junit.runners.Suite;
 
 public class Runner {
     public static String RESET = "";
@@ -62,7 +61,8 @@ public class Runner {
                     });
                     junit.run(polluterRequest);
 
-                    polluterRerunner = new PolluterRerunner(polluterRequest, junit);
+                    polluterRerunner = new PolluterRerunner(polluterRequest, junit,
+                            polluterTest.getMethod());
 
                     Request request = Request.classes(getAllTestClasses()).filterWith(new Filter() {
                         @Override
